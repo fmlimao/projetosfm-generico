@@ -1,3 +1,5 @@
 module.exports = (err, req, res, next) => {
-  res.status(500).send(`API - Erro 500: ${err.message}`)
+  let ret = req.ret()
+  ret = res.errorHandler(err, ret)
+  res.status(ret.getCode()).json(ret.generate())
 }

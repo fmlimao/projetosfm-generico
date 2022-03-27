@@ -32,5 +32,5 @@ app.use('/', require('./src/site'))
 const { PORT = 3000 } = process.env
 
 app.listen(PORT, async () => {
-  console.log(`Server is running on port ${PORT}`)
+  console.log(`Servidor rodando no host http://localhost:${PORT}/`)
 })
