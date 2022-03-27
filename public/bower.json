@@ -1,0 +1,23 @@
+{
+  "name": "projetosfm-generico",
+  "description": "Sistema Generico",
+  "main": "index.js",
+  "authors": [
+    "Leandro Macedo <fmlimao@gmail.com> (http://github.com/fmlimao)"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/fmlimao/projetosfm-generico",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "admin-lte": "^2.4.0",
+    "bootstrap": "^3.3.7",
+    "vue": "^2.6.12",
+    "axios": "^0.21.0"
+  }
+}

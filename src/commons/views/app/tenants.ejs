@@ -1,0 +1,108 @@
+<%- contentFor('body') %>
+
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            <i class="fa fa-users"></i> Inquilinos
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="/app"><i class="fa fa-home"></i> Home</a></li>
+            <li class="active"><i class="fa fa-users"></i> Inquilinos</li>
+        </ol>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+        <p class="text-right">
+            <a href="/app/tenants/create" class="btn btn-default">
+                <span class="fa fa-plus"></span> Adicionar
+            </a>
+        </p>
+
+        <div class="box">
+            <div class="box-header with-border">
+                <h3 class="box-title">Lista de Inquilinos</h3>
+                <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-box-tool" @click.prevent="getTenants()">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="box-body" v-if="!tenants.loaded && tenants.loading">
+                <div class="alert alert-info">Carregando...</div>
+            </div>
+
+            <div class="box-body" v-if="tenants.loaded && !tenants.list.length">
+                <div class="alert alert-warning">Nenhum inquilino cadastrado</div>
+            </div>
+
+            <div class="box-body no-padding" v-if="tenants.loaded && tenants.list.length">
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th style="width: 40px" class="text-right">#</th>
+                            <th>Nome</th>
+                            <th style="width: 160px;" class="text-center">Criado em</th>
+                            <th style="width: 160px;" class="text-center">Ações</th>
+                        </tr>
+                        <tr v-for="tenant in tenants.list">
+                            <td class="text-right">{{ tenant.id }}</td>
+                            <td>
+                                <a :href="`/app/tenants/${tenant.id}`">{{ tenant.name }}</a>
+                            </td>
+                            <td class="text-center">{{ tenant.createdAt }}</td>
+                            <td class="text-center">
+                                <a href="#" class="btn btn-default" title="Editar">
+                                    <span class="fa fa-pencil"></span>
+                                </a>
+
+                                <a href="#" class="btn btn-danger" title="Remover">
+                                    <span class="fa fa-trash"></span>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="overlay" v-if="tenants.loaded && tenants.loading">
+                <i class="fa fa-refresh fa-spin"></i>
+            </div>
+        </div>
+
+
+    </section>
+
+    <%- contentFor('scripts') %>
+    <script>
+        mixins.push({
+            data: {
+                tenants: {
+                    loading: false,
+                    loaded: false,
+                    list: []
+                }
+            },
+            methods: {
+                init: () => {
+                    App.getTenants()
+                },
+                getTenants: async () => {
+                    App.tenants.loading = true
+
+                    try {
+                        const response = await axios.get('/api/tenants')
+                        App.tenants.list = response.data.content.tenants
+                    } catch (error) {
+                        console.log(error);
+                        App.tenants.list = [];
+                    }
+
+                    App.tenants.loading = false
+                    App.tenants.loaded = true;
+                }
+            }
+        })
+    </script>

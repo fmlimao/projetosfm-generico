@@ -3,29 +3,34 @@ console.clear()
 require('dotenv').config()
 
 const express = require('express')
+const expressLayouts = require('express-ejs-layouts')
 const cookieParser = require('cookie-parser')
+const path = require('path')
 
 const app = express()
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
-app.use(express.static('./public'))
+app.use(express.static(path.resolve(__dirname, './public')))
 app.use(cookieParser())
-app.set('views', './src/views')
+
+app.set('views', path.resolve(__dirname, './src/commons/views'))
 app.set('view engine', 'ejs')
 
-// Rotas do Site
-app.use('/', require('./src/routes/site'))
+app.use('/', expressLayouts)
+app.set('layout', 'site/layout', 'app/layout')
 
-// Rotas do App
-app.use('/app', require('./src/routes/app'))
+// Projeto API
+app.use('/api', require('./src/api'))
 
-// Erros 404 e 500
-app.use(require('./src/middlewares/site/error-404'))
-app.use(require('./src/middlewares/site/error-500'))
+// Projeto App
+app.use('/app', require('./src/app'))
+
+// Projeto Site
+app.use('/', require('./src/site'))
 
 const { PORT = 3000 } = process.env
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`)
 })
