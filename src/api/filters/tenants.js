@@ -15,7 +15,7 @@ function sanitizeArrayFilter (filter, options = {}) {
 
       return item
     })
-    .filter(item => item)
+    .filter(item => item !== null && item !== '')
 
   if (list.length) filter = filter.filter(item => list.includes(item))
 
@@ -39,6 +39,32 @@ function filterName (filter, criterias, values) {
   if (filter.name !== undefined) {
     criterias.push('t.name LIKE :name')
     values.name = `%${filter.name}%`
+  }
+}
+
+function filterActive (filter, criterias, values) {
+  if (filter.active !== undefined) {
+    const sanitizedValues = sanitizeArrayFilter(filter.active, {
+      helpers: [item => Number(item)]
+    })
+
+    if (sanitizedValues.length) {
+      criterias.push('t.active IN (:active)')
+      values.active = sanitizedValues
+    }
+  }
+}
+
+function filterLocked (filter, criterias, values) {
+  if (filter.locked !== undefined) {
+    const sanitizedValues = sanitizeArrayFilter(filter.locked, {
+      helpers: [item => Number(item)]
+    })
+
+    if (sanitizedValues.length) {
+      criterias.push('t.locked IN (:locked)')
+      values.locked = sanitizedValues
+    }
   }
 }
 
@@ -98,6 +124,8 @@ function orderByDir (dir = null) {
 module.exports = {
   filterUuid,
   filterName,
+  filterActive,
+  filterLocked,
   filterCreatedAt,
   filterSearch,
   orderByColumn,

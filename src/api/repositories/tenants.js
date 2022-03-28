@@ -1,16 +1,24 @@
-const JsonReturn = require('fm-json-response')
-const validator = require('fm-validator')
 const db = require('../../commons/database/conn')
+const filters = require('../filters/tenants')
 const generateOptions = require('../../commons/helpers/generate-options')
-const { generateRandomObjectID } = require('../../commons/helpers/key-generator')
-const {
-  filterUuid,
-  filterName,
-  filterCreatedAt,
-  filterSearch,
-  orderByColumn,
-  orderByDir
-} = require('../filters/tenants')
+const JsonReturn = require('fm-json-response')
+const keysGenerator = require('../../commons/helpers/key-generator')
+const validator = require('fm-validator')
+
+const orderColumns = {
+  id: 'uuid',
+  name: 'name',
+  createdAt: 'created_at'
+}
+
+const viewColumns = {
+  uuid: 'id',
+  name: 'name',
+  active: 'active',
+  locked: 'locked',
+  created_at: 'createdAt',
+  altered_at: 'alteredAt'
+}
 
 module.exports = class TenantsRepository {
   static async findAll ({ filter = {} } = {}) {
@@ -22,26 +30,21 @@ module.exports = class TenantsRepository {
       const whereCriteria = []
       const whereValues = {}
 
-      const columns = {
-        id: 'uuid',
-        name: 'name',
-        createdAt: 'created_at'
-      }
+      filters.filterUuid(filter, whereCriteria, whereValues)
+      filters.filterName(filter, whereCriteria, whereValues)
+      filters.filterActive(filter, whereCriteria, whereValues)
+      filters.filterLocked(filter, whereCriteria, whereValues)
+      filters.filterCreatedAt(filter, whereCriteria, whereValues)
+      filters.filterSearch(queryOptions.search, whereCriteria, whereValues)
 
-      filterUuid(filter, whereCriteria, whereValues)
-      filterName(filter, whereCriteria, whereValues)
-      filterCreatedAt(filter, whereCriteria, whereValues)
-      filterSearch(queryOptions.search, whereCriteria, whereValues)
+      queryOptions.orderByColumn = filters.orderByColumn(queryOptions.orderByColumn, orderColumns, 'uuid')
 
-      queryOptions.orderByColumn = orderByColumn(queryOptions.orderByColumn, columns, 'uuid')
-
-      queryOptions.orderByDir = orderByDir(queryOptions.orderByDir)
+      queryOptions.orderByDir = filters.orderByDir(queryOptions.orderByDir)
 
       const next = {
         queryOptions,
         whereCriteria,
-        whereValues,
-        columns
+        whereValues
       }
 
       resolve(next)
@@ -77,7 +80,13 @@ module.exports = class TenantsRepository {
         const values = Object.assign({}, next.whereValues)
 
         next.data = await db.getAll(`
-          SELECT t.uuid, name, created_at
+          SELECT
+            t.uuid,
+            t.name,
+            t.active,
+            t.locked,
+            t.created_at,
+            t.altered_at
           FROM tenants t
           WHERE t.deleted_at IS NULL
           ${next.whereCriteria.length ? ` AND (${next.whereCriteria.join(' AND ')})` : ''}
@@ -90,18 +99,12 @@ module.exports = class TenantsRepository {
       .then(next => {
         // Essa promise formata os dados ou renomeia as colunas
 
-        const reversedColumns = {}
-
-        for (const i in next.columns) {
-          reversedColumns[next.columns[i]] = i
-        }
-
         next.data = next.data.map(item => {
           const newItem = {}
 
           for (const i in item) {
-            if (typeof reversedColumns[i] !== 'undefined') {
-              newItem[reversedColumns[i]] = item[i]
+            if (typeof viewColumns[i] !== 'undefined') {
+              newItem[viewColumns[i]] = item[i]
             }
           }
 
@@ -140,7 +143,7 @@ module.exports = class TenantsRepository {
       // Essa promise recupera o registro
 
       (async () => {
-        const field = id ? 'tenant_id' : (uuid ? 'uuid' : null)
+        const field = id ? 't.tenant_id' : (uuid ? 'uuid' : null)
         const value = id || uuid
 
         if (!field) {
@@ -148,9 +151,15 @@ module.exports = class TenantsRepository {
         }
 
         const data = await db.getOne(`
-          SELECT uuid, name, created_at
-          FROM tenants
-          WHERE deleted_at IS NULL
+          SELECT
+            t.uuid,
+            t.name,
+            t.active,
+            t.locked,
+            t.created_at,
+            t.altered_at
+          FROM tenants t
+          WHERE t.deleted_at IS NULL
           AND ${field} = ?;
         `, [
           value
@@ -159,6 +168,19 @@ module.exports = class TenantsRepository {
         resolve(data)
       })()
     })
+      .then(data => {
+        // Essa promise formata os dados ou renomeia as colunas
+
+        const newItem = {}
+
+        for (const i in data) {
+          if (typeof viewColumns[i] !== 'undefined') {
+            newItem[viewColumns[i]] = data[i]
+          }
+        }
+
+        return newItem
+      })
       .then(data => {
         // Essa promise retorna os dados no padrão do sistema
 
@@ -221,7 +243,7 @@ module.exports = class TenantsRepository {
         return next
       })
       .then(async next => {
-        next.fields.uuid = generateRandomObjectID()
+        next.fields.uuid = keysGenerator.generateRandomObjectID()
 
         const id = await db.insert(`
           INSERT INTO tenants (uuid, name, created_at)
@@ -238,18 +260,47 @@ module.exports = class TenantsRepository {
   static async update (id = null, uuid = null, fields) {
     return this.findOneById(id, uuid)
       .then(async findRet => {
+        const { locked } = fields
+
+        if (locked === undefined && findRet.content.data.locked) {
+          const ret = new JsonReturn()
+
+          ret.setError(true)
+          ret.setCode(400)
+          ret.addMessage('Esse registro não pode ser alterado.')
+
+          throw ret
+        }
+
+        return findRet
+      })
+      .then(async findRet => {
         const data = findRet.content.data
 
         const ret = new JsonReturn()
 
-        ret.addFields(['name'])
+        const { name, active, locked } = fields
 
-        const { name } = fields
+        if (name !== undefined) {
+          ret.addField('name')
+        }
+
+        if (active !== undefined) {
+          ret.addField('active')
+        }
+
+        if (locked !== undefined) {
+          ret.addField('locked')
+        }
 
         if (!validator(ret, {
-          name
+          name,
+          active,
+          locked
         }, {
-          name: 'string|min:3|max:255'
+          name: 'string|min:3|max:255',
+          active: 'integer|between:0,1',
+          locked: 'integer|between:0,1'
         })) {
           ret.setError(true)
           ret.setCode(400)
@@ -259,7 +310,9 @@ module.exports = class TenantsRepository {
 
         const next = {
           fields: {
-            name
+            name,
+            active,
+            locked
           },
           data,
           ret
@@ -270,14 +323,14 @@ module.exports = class TenantsRepository {
       .then(async next => {
         if (next.fields.name) {
           const dataExists = await db.getOne(`
-              SELECT tenant_id
-              FROM tenants
-              WHERE deleted_at IS NULL
-              AND name = ?
-              AND uuid != ?;
+            SELECT tenant_id
+            FROM tenants
+            WHERE deleted_at IS NULL
+            AND name = ?
+            AND uuid != ?;
           `, [
             next.fields.name,
-            next.data.uuid
+            next.data.id
           ])
 
           if (dataExists) {
@@ -295,25 +348,54 @@ module.exports = class TenantsRepository {
       })
       .then(next => {
         if (typeof next.fields.name !== 'undefined') next.data.name = next.fields.name
+        if (typeof next.fields.active !== 'undefined') next.data.active = Number(next.fields.active)
+        if (typeof next.fields.locked !== 'undefined') next.data.locked = Number(next.fields.locked)
 
         return next
       })
       .then(async next => {
         await db.update(`
           UPDATE tenants
-          SET name = ?
+          SET name = ?,
+          active = ?,
+          locked = ?
           WHERE uuid = ?;
         `, [
           next.data.name,
-          next.data.uuid
+          next.data.active,
+          next.data.locked,
+          next.data.id
         ])
 
-        return this.findOneById(null, next.data.uuid)
+        return this.findOneById(null, next.data.id)
       })
   }
 
   static delete (id = null, uuid = null) {
     return this.findOneById(id, uuid)
+      .then(async findRet => {
+        // Verifica se o registro pode ser editado
+        const data = await db.getOne(`
+          SELECT tenant_id, locked
+          FROM tenants
+          WHERE deleted_at IS NULL
+          AND uuid = ?;
+        `, [
+          findRet.content.data.uuid
+        ])
+
+        if (data.locked) {
+          const ret = new JsonReturn()
+
+          ret.setError(true)
+          ret.setCode(400)
+          ret.addMessage('Esse registro não pode ser alterado.')
+
+          throw ret
+        }
+
+        return findRet
+      })
       .then(async findRet => {
         await db.update(`
           UPDATE tenants
