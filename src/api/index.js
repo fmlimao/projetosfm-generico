@@ -11,6 +11,7 @@ router.use(require('./middlewares/json-return'))
 router.use(getAuthMiddleware)
 
 router.get('/', verifyAuthMiddleware, require('./controllers/home/get'))
+
 router.get('/tenants', verifyAuthMiddleware, require('./controllers/tenants/list'))
 router.post('/tenants', verifyAuthMiddleware, require('./controllers/tenants/store'))
 router.get('/tenants/:uuid', verifyAuthMiddleware, getTenant, require('./controllers/tenants/show'))

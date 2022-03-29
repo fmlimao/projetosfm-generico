@@ -23,6 +23,8 @@ router.get('/logout', require('./controllers/logout/get'))
 router.get('/', verifyAuthMiddleware, require('./controllers/home/get'))
 
 router.get('/tenants', verifyAuthMiddleware, require('./controllers/tenants/list'))
+router.get('/tenants/create', verifyAuthMiddleware, require('./controllers/tenants/create'))
+router.get('/tenants/:uuid', verifyAuthMiddleware, require('./controllers/tenants/update'))
 
 router.use(require('./middlewares/error-404'))
 router.use(require('./middlewares/error-500'))

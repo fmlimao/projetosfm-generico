@@ -42,23 +42,41 @@
                 <table class="table table-bordered">
                     <tbody>
                         <tr>
-                            <th style="width: 40px" class="text-right">#</th>
+                            <th style="width: 200px" class="text-right">ID</th>
                             <th>Nome</th>
+                            <th style="width: 80px;" class="text-center">Ativo</th>
+                            <th style="width: 80px;" class="text-center">Trancado</th>
                             <th style="width: 160px;" class="text-center">Criado em</th>
+                            <th style="width: 160px;" class="text-center">Editado em</th>
                             <th style="width: 160px;" class="text-center">Ações</th>
                         </tr>
                         <tr v-for="tenant in tenants.list">
-                            <td class="text-right">{{ tenant.id }}</td>
+                            <td class="text-right">
+                                <a :href="`/app/tenants/${tenant.id}`">{{ tenant.id }}</a>
+                            </td>
                             <td>
                                 <a :href="`/app/tenants/${tenant.id}`">{{ tenant.name }}</a>
                             </td>
-                            <td class="text-center">{{ tenant.createdAt }}</td>
                             <td class="text-center">
-                                <a href="#" class="btn btn-default" title="Editar">
+                                <span class="fa fa-check text-success" v-if="tenant.active"></span>
+                                <span class="fa fa-times text-danger" v-if="!tenant.active"></span>
+                            </td>
+                            <td class="text-center">
+                                <span class="fa fa-lock text-danger" v-if="tenant.locked"></span>
+                                <span class="fa fa-unlock text-success" v-if="!tenant.locked"></span>
+                            </td>
+                            <td class="text-center">
+                                {{ moment(tenant.createdAt).format('DD/MM/YYYY HH:mm:ss') }}
+                            </td>
+                            <td class="text-center">
+                                {{ moment(tenant.alteredAt).format('DD/MM/YYYY HH:mm:ss') }}
+                            </td>
+                            <td class="text-center">
+                                <a :href="`/app/tenants/${tenant.id}`" class="btn btn-default btn-sm" title="Editar">
                                     <span class="fa fa-pencil"></span>
                                 </a>
 
-                                <a href="#" class="btn btn-danger" title="Remover">
+                                <a href="#" class="btn btn-danger btn-sm" title="Remover" @click.prevent="removeTenant(tenant)">
                                     <span class="fa fa-trash"></span>
                                 </a>
                             </td>
@@ -75,7 +93,7 @@
 
     </section>
 
-    <%- contentFor('scripts') %>
+<%- contentFor('scripts') %>
     <script>
         mixins.push({
             data: {
@@ -94,14 +112,26 @@
 
                     try {
                         const response = await axios.get('/api/tenants')
-                        App.tenants.list = response.data.content.tenants
+                        App.tenants.list = response.data.content.data
                     } catch (error) {
-                        console.log(error);
+                        console.log('error', error);
                         App.tenants.list = [];
                     }
 
                     App.tenants.loading = false
                     App.tenants.loaded = true;
+                },
+                removeTenant: async (tenant) => {
+                    if (confirm(`Deseja realmente remover o inquilino ${tenant.name}?`)) {
+                        try {
+                            const response = await axios.delete(`/api/tenants/${tenant.id}`)
+                            App.getTenants()
+                            alert('Inquilino removido com sucesso!')
+                        } catch (error) {
+                            console.log('error', error);
+                            alert(error.response.data.messages.join('<br>'))
+                        }
+                    }
                 }
             }
         })

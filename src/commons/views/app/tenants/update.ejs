@@ -1,0 +1,154 @@
+<%- contentFor('body') %>
+
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            <i class="fa fa-users"></i> Inquilinos - Editar ({{ tenant.fields.uuid.value }})
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="/app"><i class="fa fa-home"></i> Home</a></li>
+            <li><a href="/app/tenants"><i class="fa fa-users"></i> Inquilinos</a></li>
+            <li class="active">Editar</li>
+        </ol>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+        <p>
+            <a href="/app/tenants" class="btn btn-default">
+                <span class="fa fa-arrow-left"></span> Voltar
+            </a>
+        </p>
+
+        <div class="box">
+            <div class="box-header with-border">
+                <h3 class="box-title">Editar Inquilino</h3>
+            </div>
+
+
+            <form @submit.prevent="updateTenant()">
+                <div class="box-body">
+                    <div class="alert" v-if="tenant.messages.length" :class="{
+                        'alert-danger': tenant.error,
+                        'alert-success': !tenant.error,
+                    }" v-html="tenant.messages.join('<br>')"></div>
+
+                    <div class="form-group" :class="{
+                        'has-error': tenant.fields.name.error
+                    }">
+                        <label for="tenantName">Nome do inquilino</label>
+                        <input type="text" class="form-control" id="tenantName" placeholder="Nome do inquilino" v-model="tenant.fields.name.value" :disabled="tenant.loading">
+                        <small class="help-block" v-html="tenant.fields.name.messages.join('<br>')"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ativo</label>
+                        <p class="form-control-static">{{ tenant.fields.active.value }}</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Trancado</label>
+                        <p class="form-control-static">{{ tenant.fields.locked.value }}</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Criado em</label>
+                        <p class="form-control-static">{{ moment(tenant.fields.createdAt.value).format('DD/MM/YYYY HH:mm:ss') }}</p>
+                    </div>
+                </div>
+
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-primary" :disabled="tenant.loading">Editar</button>
+                </div>
+            </form>
+        </div>
+
+
+    </section>
+
+    <%- contentFor('scripts') %>
+        <script>
+            mixins.push({
+                data: {
+                    tenant: {
+                        error: true,
+                        messages: [],
+
+                        loading: false,
+
+                        fields: {
+                            uuid: {
+                                value: '<%- uuid %>',
+                            },
+                            name: {
+                                value: '',
+                                error: false,
+                                messages: []
+                            },
+                            active: {
+                                value: '',
+                            },
+                            locked: {
+                                value: '',
+                            },
+                            createdAt: {
+                                value: '',
+                            },
+                        }
+                    }
+                },
+                methods: {
+                    init: () => {
+                        App.getTenant()
+                    },
+                    getTenant: async () => {
+                        App.tenant.loading = true
+
+                        try {
+                            const response = (await axios.get(`/api/tenants/${App.tenant.fields.uuid.value}`)).data.content.data
+
+                            App.tenant.fields.name.value = response.name
+                            App.tenant.fields.active.value = response.active
+                            App.tenant.fields.locked.value = response.locked
+                            App.tenant.fields.createdAt.value = response.createdAt
+                        } catch (error) {
+                            console.log('error', error);
+                        }
+
+                        App.tenant.loading = false
+                    },
+                    updateTenant: async () => {
+                        App.tenant.loading = true
+                        App.tenant.error = false
+                        App.tenant.messages = []
+
+                        App.tenant.fields.name.value = App.tenant.fields.name.value.trim()
+                        App.tenant.fields.name.error = false
+                        App.tenant.fields.name.messages = []
+
+                        try {
+                            const response = (await axios.put(`/api/tenants/${App.tenant.fields.uuid.value}`, {
+                                name: App.tenant.fields.name.value
+                            })).data.content.data
+
+                            App.tenant.messages = [
+                                'Inquilino editado com sucesso!'
+                            ]
+                        } catch (error) {
+                            const response = error.response.data
+
+                            App.tenant.error = true
+                            App.tenant.messages = response.messages
+
+                            for (const field in response.form) {
+                                App.tenant.fields[field].error = true
+                                App.tenant.fields[field].messages = response.form[field].messages
+                            }
+                        }
+
+                        App.tenant.loading = false
+                    }
+                }
+            })
+        </script>

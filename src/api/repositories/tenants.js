@@ -6,9 +6,9 @@ const keysGenerator = require('../../commons/helpers/key-generator')
 const validator = require('fm-validator')
 
 const orderColumns = {
-  id: 'uuid',
-  name: 'name',
-  createdAt: 'created_at'
+  id: 't.uuid',
+  name: 't.name',
+  createdAt: 't.created_at'
 }
 
 const viewColumns = {
@@ -37,9 +37,9 @@ module.exports = class TenantsRepository {
       filters.filterCreatedAt(filter, whereCriteria, whereValues)
       filters.filterSearch(queryOptions.search, whereCriteria, whereValues)
 
-      queryOptions.orderByColumn = filters.orderByColumn(queryOptions.orderByColumn, orderColumns, 'uuid')
+      queryOptions.orderByColumn = filters.orderByColumn(queryOptions.orderByColumn, orderColumns, 't.uuid')
 
-      queryOptions.orderByDir = filters.orderByDir(queryOptions.orderByDir)
+      // queryOptions.orderByDir = filters.orderByDir(queryOptions.orderByDir)
 
       const next = {
         queryOptions,
@@ -171,6 +171,8 @@ module.exports = class TenantsRepository {
       .then(data => {
         // Essa promise formata os dados ou renomeia as colunas
 
+        if (!data) return data
+
         const newItem = {}
 
         for (const i in data) {
@@ -185,6 +187,11 @@ module.exports = class TenantsRepository {
         // Essa promise retorna os dados no padrão do sistema
 
         const ret = new JsonReturn()
+
+        if (!data) {
+          ret.setCode(404)
+          ret.setError(true)
+        }
 
         ret.addContent('data', data)
 
@@ -374,17 +381,7 @@ module.exports = class TenantsRepository {
   static delete (id = null, uuid = null) {
     return this.findOneById(id, uuid)
       .then(async findRet => {
-        // Verifica se o registro pode ser editado
-        const data = await db.getOne(`
-          SELECT tenant_id, locked
-          FROM tenants
-          WHERE deleted_at IS NULL
-          AND uuid = ?;
-        `, [
-          findRet.content.data.uuid
-        ])
-
-        if (data.locked) {
+        if (findRet.content.data.locked) {
           const ret = new JsonReturn()
 
           ret.setError(true)
@@ -402,7 +399,7 @@ module.exports = class TenantsRepository {
           SET deleted_at = NOW()
           WHERE uuid = ?;
         `, [
-          findRet.content.data.uuid
+          findRet.content.data.id
         ])
       })
   }

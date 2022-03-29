@@ -92,6 +92,8 @@ function filterSearch (search, criterias, values) {
     criterias.push(`(
       t.uuid LIKE :search
       OR t.name LIKE :search
+      OR t.active LIKE :search
+      OR t.locked LIKE :search
       OR t.created_at LIKE :search
     )`)
     values.search = `%${search}%`
