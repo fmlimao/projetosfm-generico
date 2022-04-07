@@ -30,6 +30,9 @@
     <!-- bootstrap wysihtml5 - text editor -->
     <link rel="stylesheet"
         href="/bower_components/admin-lte/plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.min.css">
+    <!-- Custom -->
+    <link rel="stylesheet" href="/css/custom/bootstrap.switch.css">
+    <link rel="stylesheet" href="/css/custom/bootstrap.save-bar.css">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -362,21 +365,11 @@
                         </a>
                     </li>
 
-                    <li class="<%- (url.startsWith('/tenants') ? 'active menu-open' : '') %> treeview">
-                        <a href="#">
-                            <i class="fa fa-users"></i> <span>Inquilinos</span>
-                            <span class="pull-right-container">
-                                <i class="fa fa-angle-left pull-right"></i>
-                            </span>
+                    <li class="<%- (url.startsWith('/tenants') ? 'active' : '') %>">
+                        <a href="/app/tenants">
+                            <i class="fa fa-users"></i>
+                            <span>Inquilinos</span>
                         </a>
-                        <ul class="treeview-menu">
-                            <li>
-                                <a href="/app/tenants"><i class="fa fa-circle-o"></i> Listar</a>
-                            </li>
-                            <li>
-                                <a href="/app/tenants/create"><i class="fa fa-circle-o"></i> Adicionar</a>
-                            </li>
-                        </ul>
                     </li>
                 </ul>
             </section>

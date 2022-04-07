@@ -15,7 +15,6 @@ const viewColumns = {
   uuid: 'id',
   name: 'name',
   active: 'active',
-  locked: 'locked',
   created_at: 'createdAt',
   altered_at: 'alteredAt'
 }
@@ -33,7 +32,6 @@ module.exports = class TenantsRepository {
       filters.filterUuid(filter, whereCriteria, whereValues)
       filters.filterName(filter, whereCriteria, whereValues)
       filters.filterActive(filter, whereCriteria, whereValues)
-      filters.filterLocked(filter, whereCriteria, whereValues)
       filters.filterCreatedAt(filter, whereCriteria, whereValues)
       filters.filterSearch(queryOptions.search, whereCriteria, whereValues)
 
@@ -84,7 +82,6 @@ module.exports = class TenantsRepository {
             t.uuid,
             t.name,
             t.active,
-            t.locked,
             t.created_at,
             t.altered_at
           FROM tenants t
@@ -155,7 +152,6 @@ module.exports = class TenantsRepository {
             t.uuid,
             t.name,
             t.active,
-            t.locked,
             t.created_at,
             t.altered_at
           FROM tenants t
@@ -267,48 +263,37 @@ module.exports = class TenantsRepository {
   static async update (id = null, uuid = null, fields) {
     return this.findOneById(id, uuid)
       .then(async findRet => {
-        const { locked } = fields
-
-        if (locked === undefined && findRet.content.data.locked) {
-          const ret = new JsonReturn()
-
-          ret.setError(true)
-          ret.setCode(400)
-          ret.addMessage('Esse registro não pode ser alterado.')
-
-          throw ret
-        }
-
-        return findRet
-      })
-      .then(async findRet => {
         const data = findRet.content.data
 
         const ret = new JsonReturn()
 
-        const { name, active, locked } = fields
+        const { name, active } = fields
+        let fieldCount = 0
+        const updateFields = {}
+        const updateValidades = {}
 
         if (name !== undefined) {
           ret.addField('name')
+          fieldCount++
+          updateFields.name = name
+          updateValidades.name = 'required|string|min:3|max:255'
         }
 
         if (active !== undefined) {
           ret.addField('active')
+          fieldCount++
+          updateFields.active = active
+          updateValidades.active = 'required|integer|between:0,1'
         }
 
-        if (locked !== undefined) {
-          ret.addField('locked')
+        if (!fieldCount) {
+          ret.setError(true)
+          ret.setCode(400)
+          ret.addMessage('Nenhum campo foi informado.')
+          throw ret
         }
 
-        if (!validator(ret, {
-          name,
-          active,
-          locked
-        }, {
-          name: 'string|min:3|max:255',
-          active: 'integer|between:0,1',
-          locked: 'integer|between:0,1'
-        })) {
+        if (!validator(ret, updateFields, updateValidades)) {
           ret.setError(true)
           ret.setCode(400)
           ret.addMessage('Verifique todos os campos.')
@@ -318,8 +303,7 @@ module.exports = class TenantsRepository {
         const next = {
           fields: {
             name,
-            active,
-            locked
+            active
           },
           data,
           ret
@@ -356,7 +340,6 @@ module.exports = class TenantsRepository {
       .then(next => {
         if (typeof next.fields.name !== 'undefined') next.data.name = next.fields.name
         if (typeof next.fields.active !== 'undefined') next.data.active = Number(next.fields.active)
-        if (typeof next.fields.locked !== 'undefined') next.data.locked = Number(next.fields.locked)
 
         return next
       })
@@ -364,13 +347,11 @@ module.exports = class TenantsRepository {
         await db.update(`
           UPDATE tenants
           SET name = ?,
-          active = ?,
-          locked = ?
+          active = ?
           WHERE uuid = ?;
         `, [
           next.data.name,
           next.data.active,
-          next.data.locked,
           next.data.id
         ])
 
@@ -380,19 +361,6 @@ module.exports = class TenantsRepository {
 
   static delete (id = null, uuid = null) {
     return this.findOneById(id, uuid)
-      .then(async findRet => {
-        if (findRet.content.data.locked) {
-          const ret = new JsonReturn()
-
-          ret.setError(true)
-          ret.setCode(400)
-          ret.addMessage('Esse registro não pode ser alterado.')
-
-          throw ret
-        }
-
-        return findRet
-      })
       .then(async findRet => {
         await db.update(`
           UPDATE tenants

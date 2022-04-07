@@ -16,8 +16,6 @@ router.get('/tenants', verifyAuthMiddleware, require('./controllers/tenants/list
 router.post('/tenants', verifyAuthMiddleware, require('./controllers/tenants/store'))
 router.get('/tenants/:uuid', verifyAuthMiddleware, getTenant, require('./controllers/tenants/show'))
 router.put('/tenants/:uuid', verifyAuthMiddleware, getTenant, require('./controllers/tenants/update'))
-router.put('/tenants/:uuid/active/:active', verifyAuthMiddleware, getTenant, require('./controllers/tenants/update-active'))
-router.put('/tenants/:uuid/locked/:locked', verifyAuthMiddleware, getTenant, require('./controllers/tenants/update-locked'))
 router.delete('/tenants/:uuid', verifyAuthMiddleware, getTenant, require('./controllers/tenants/remove'))
 
 router.use(require('./middlewares/error-404'))

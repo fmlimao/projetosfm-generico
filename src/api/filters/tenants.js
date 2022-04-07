@@ -55,19 +55,6 @@ function filterActive (filter, criterias, values) {
   }
 }
 
-function filterLocked (filter, criterias, values) {
-  if (filter.locked !== undefined) {
-    const sanitizedValues = sanitizeArrayFilter(filter.locked, {
-      helpers: [item => Number(item)]
-    })
-
-    if (sanitizedValues.length) {
-      criterias.push('t.locked IN (:locked)')
-      values.locked = sanitizedValues
-    }
-  }
-}
-
 function filterCreatedAt (filter, criterias, values) {
   // if (filter.initialCreatedAt === undefined || filter.finalCreatedAt === undefined) {
   //   filter.initialCreatedAt = moment().subtract(30, 'days').format('YYYY-MM-DD')
@@ -127,7 +114,6 @@ module.exports = {
   filterUuid,
   filterName,
   filterActive,
-  filterLocked,
   filterCreatedAt,
   filterSearch,
   orderByColumn,

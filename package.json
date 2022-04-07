@@ -6,6 +6,11 @@
   "scripts": {
     "start": "node index"
   },
+  "standard": {
+    "ignore": [
+      "/public/*"
+    ]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fmlimao/projetosfm-generico.git"

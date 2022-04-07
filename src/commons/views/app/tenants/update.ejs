@@ -3,7 +3,8 @@
     <!-- Content Header (Page header) -->
     <section class="content-header">
         <h1>
-            <i class="fa fa-users"></i> Inquilinos - Editar ({{ tenant.fields.uuid.value }})
+            <i class="fa fa-users"></i> Inquilinos - {{ tenant.oldValues.name }}
+            (#{{ tenant.oldValues.uuid }})
         </h1>
         <ol class="breadcrumb">
             <li><a href="/app"><i class="fa fa-home"></i> Home</a></li>
@@ -21,134 +22,104 @@
             </a>
         </p>
 
-        <div class="box">
-            <div class="box-header with-border">
-                <h3 class="box-title">Editar Inquilino</h3>
+        <div class="row">
+            <div class="col-xs-12">
+
+                <div class="box">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Editar Inquilino</h3>
+                    </div>
+
+                    <form @submit.prevent="updateTenant()">
+                        <div class="box-body">
+                            <div class="alert" v-if="tenant.messages.length" :class="{
+                                'alert-danger': tenant.error,
+                                'alert-success': !tenant.error,
+                            }" v-html="tenant.messages.join('<br>')"></div>
+
+                            <div class="row">
+                                <div class="col-xs-12">
+                                    <div class="form-group" :class="{
+                                        'has-error': tenant.fields.name.error
+                                    }">
+                                        <label for="tenantName">Nome do inquilino</label>
+                                        <input type="text" class="form-control" id="tenantName"
+                                            :placeholder="tenant.oldValues.name" v-model="tenant.newValues.name"
+                                            :disabled="tenant.loading">
+                                        <small class="help-block"
+                                            v-html="tenant.fields.name.messages.join('<br>')"></small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-xs-12 col-sm-4">
+                                    <div class="form-group" :class="{
+                                        'has-error': tenant.fields.active.error
+                                    }">
+                                        <label>Ativo</label>
+                                        <p class="form-control-static">
+                                            <span class="material-switch">
+                                                <input :id="'tenantActiveSwitch_' + tenant.oldValues.uuid"
+                                                    :name="'tenantActiveSwitch_' + tenant.oldValues.uuid"
+                                                    type="checkbox" v-model="tenant.newValues.active">
+                                                <label :for="'tenantActiveSwitch_' + tenant.oldValues.uuid"
+                                                    class="label-success"></label>
+                                            </span>
+                                        </p>
+                                        <small class="help-block"
+                                            v-html="tenant.fields.active.messages.join('<br>')"></small>
+                                    </div>
+                                </div>
+
+                                <div class="col-xs-12 col-sm-4">
+                                    <div class="form-group">
+                                        <label>Criado em</label>
+                                        <p class="form-control-static">{{
+                                            moment(tenant.newValues.createdAt).format('DD/MM/YYYY HH:mm:ss') }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="col-xs-12 col-sm-4">
+                                    <div class="form-group">
+                                        <label>Editado em</label>
+                                        <p class="form-control-static">{{
+                                            moment(tenant.newValues.alteredAt).format('DD/MM/YYYY HH:mm:ss') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="save-bar" :class="{
+                            'active': JSON.stringify(tenant.oldValues) != JSON.stringify(tenant.newValues)
+                        }">
+                            <span>
+                                Cuidado, você tem alterações que ainda não foram salvas.
+                            </span>
+                            <div class="pull-right">
+                                <button type="button" class="btn btn-link" :disabled="tenant.loading" @click.prevent="resetForm()">Redefinir</button>
+                                <button type="submit" class="btn btn-primary" :disabled="tenant.loading">Salvar</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="overlay" v-if="tenant.loading">
+                        <i class="fa fa-refresh fa-spin"></i>
+                    </div>
+                </div>
+                <!-- /.box -->
+
             </div>
+            <!-- /.col -->
 
-
-            <form @submit.prevent="updateTenant()">
-                <div class="box-body">
-                    <div class="alert" v-if="tenant.messages.length" :class="{
-                        'alert-danger': tenant.error,
-                        'alert-success': !tenant.error,
-                    }" v-html="tenant.messages.join('<br>')"></div>
-
-                    <div class="form-group" :class="{
-                        'has-error': tenant.fields.name.error
-                    }">
-                        <label for="tenantName">Nome do inquilino</label>
-                        <input type="text" class="form-control" id="tenantName" placeholder="Nome do inquilino" v-model="tenant.fields.name.value" :disabled="tenant.loading">
-                        <small class="help-block" v-html="tenant.fields.name.messages.join('<br>')"></small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Ativo</label>
-                        <p class="form-control-static">{{ tenant.fields.active.value }}</p>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Trancado</label>
-                        <p class="form-control-static">{{ tenant.fields.locked.value }}</p>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Criado em</label>
-                        <p class="form-control-static">{{ moment(tenant.fields.createdAt.value).format('DD/MM/YYYY HH:mm:ss') }}</p>
-                    </div>
-                </div>
-
-                <div class="box-footer">
-                    <button type="submit" class="btn btn-primary" :disabled="tenant.loading">Editar</button>
-                </div>
-            </form>
         </div>
+        <!-- /.row -->
+
 
 
     </section>
 
     <%- contentFor('scripts') %>
-        <script>
-            mixins.push({
-                data: {
-                    tenant: {
-                        error: true,
-                        messages: [],
-
-                        loading: false,
-
-                        fields: {
-                            uuid: {
-                                value: '<%- uuid %>',
-                            },
-                            name: {
-                                value: '',
-                                error: false,
-                                messages: []
-                            },
-                            active: {
-                                value: '',
-                            },
-                            locked: {
-                                value: '',
-                            },
-                            createdAt: {
-                                value: '',
-                            },
-                        }
-                    }
-                },
-                methods: {
-                    init: () => {
-                        App.getTenant()
-                    },
-                    getTenant: async () => {
-                        App.tenant.loading = true
-
-                        try {
-                            const response = (await axios.get(`/api/tenants/${App.tenant.fields.uuid.value}`)).data.content.data
-
-                            App.tenant.fields.name.value = response.name
-                            App.tenant.fields.active.value = response.active
-                            App.tenant.fields.locked.value = response.locked
-                            App.tenant.fields.createdAt.value = response.createdAt
-                        } catch (error) {
-                            console.log('error', error);
-                        }
-
-                        App.tenant.loading = false
-                    },
-                    updateTenant: async () => {
-                        App.tenant.loading = true
-                        App.tenant.error = false
-                        App.tenant.messages = []
-
-                        App.tenant.fields.name.value = App.tenant.fields.name.value.trim()
-                        App.tenant.fields.name.error = false
-                        App.tenant.fields.name.messages = []
-
-                        try {
-                            const response = (await axios.put(`/api/tenants/${App.tenant.fields.uuid.value}`, {
-                                name: App.tenant.fields.name.value
-                            })).data.content.data
-
-                            App.tenant.messages = [
-                                'Inquilino editado com sucesso!'
-                            ]
-                        } catch (error) {
-                            const response = error.response.data
-
-                            App.tenant.error = true
-                            App.tenant.messages = response.messages
-
-                            for (const field in response.form) {
-                                App.tenant.fields[field].error = true
-                                App.tenant.fields[field].messages = response.form[field].messages
-                            }
-                        }
-
-                        App.tenant.loading = false
-                    }
-                }
-            })
-        </script>
+        <script>var tenantId = '<%- uuid %>';</script>
+        <script src="/js/pages/tenants/update.js"></script>

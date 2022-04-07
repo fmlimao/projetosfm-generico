@@ -5,9 +5,9 @@ module.exports = async (req, res) => {
 
   try {
     const { uuid } = req.params
-    const { name } = req.body
+    const { name, active } = req.body
 
-    const tenant = await TenantsRepository.update(null, uuid, { name })
+    const tenant = await TenantsRepository.update(null, uuid, { name, active })
 
     ret.addContent('data', tenant.content.data)
     res.status(ret.getCode()).json(ret.generate())

@@ -1,0 +1,22 @@
+.save-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  margin-left: -400px;
+  padding: 16px;
+  width: 800px;
+  height: 66px;
+  line-height: 34px;
+  border-radius: 8px;
+  z-index: 9999;
+  background-color: #1e282c;
+  color: #fff;
+  transition: all 0.3s ease-in-out;
+  margin-bottom: -100px;
+}
+.save-bar .btn-link {
+  color: #fff;
+}
+.save-bar.active {
+  margin-bottom: 0;
+}
