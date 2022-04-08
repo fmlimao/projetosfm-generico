@@ -50,7 +50,7 @@ mixins.push({
       App.tenant.loading = true
 
       try {
-        const response = (await axios.get(`/api/tenants/${App.tenant.oldValues.uuid}`)).data.content.data
+        const response = (await axios.get(`/api/tenants/${App.tenant.oldValues.uuid}`)).data.content.data.tenant
 
         App.tenant.oldValues.name = response.name
         App.tenant.oldValues.active = !!response.active
@@ -91,18 +91,29 @@ mixins.push({
 
         App.getTenant();
 
-        App.tenant.messages = [
-          'Inquilino editado com sucesso!'
-        ]
+        // App.tenant.messages = [
+        //   'Inquilino editado com sucesso!'
+        // ]
+
+        App.notify('Inquilino editado com sucesso!', 'success');
       } catch (error) {
         const response = error.response.data
 
-        App.tenant.error = true
-        App.tenant.messages = response.messages
+        if (typeof response === 'object' && response.messages !== undefined) {
+          App.tenant.error = true
+          // App.tenant.messages = response.messages
 
-        for (const field in response.form) {
-          App.tenant.fields[field].error = true
-          App.tenant.fields[field].messages = response.form[field].messages
+          App.notify(response.messages.join('<br>'), 'danger');
+
+          for (const field in response.form) {
+            App.tenant.fields[field].error = true
+            App.tenant.fields[field].messages = response.form[field].messages
+          }
+        } else {
+          App.tenant.error = true
+          // App.tenant.messages.push('Ocorreu um erro interno. Por favor, tente novamente.')
+
+          App.notify('Ocorreu um erro interno. Por favor, tente novamente.', 'warning');
         }
       }
 

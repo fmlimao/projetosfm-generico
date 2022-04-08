@@ -1,22 +1,25 @@
 const db = require('../../commons/database/conn')
 const filters = require('../filters/tenants')
 const generateOptions = require('../../commons/helpers/generate-options')
+const makeObj = require('../../commons/helpers/make-obj')
 const JsonReturn = require('fm-json-response')
 const keysGenerator = require('../../commons/helpers/key-generator')
 const validator = require('fm-validator')
 
 const orderColumns = {
-  id: 't.uuid',
-  name: 't.name',
-  createdAt: 't.created_at'
+  'tenant:id': 't.uuid',
+  'tenant:name': 't.name',
+  'tenant:active': 't.active',
+  'tenant:createdAt': 't.created_at',
+  'tenant:alteredAt': 't.altered_at'
 }
 
 const viewColumns = {
-  uuid: 'id',
-  name: 'name',
-  active: 'active',
-  created_at: 'createdAt',
-  altered_at: 'alteredAt'
+  tenantId: 'tenant:id',
+  tenantName: 'tenant:name',
+  tenantActive: 'tenant:active',
+  tenantCreatedAt: 'tenant:createdAt',
+  tenantAlteredAt: 'tenant:alteredAt'
 }
 
 module.exports = class TenantsRepository {
@@ -29,15 +32,13 @@ module.exports = class TenantsRepository {
       const whereCriteria = []
       const whereValues = {}
 
-      filters.filterUuid(filter, whereCriteria, whereValues)
-      filters.filterName(filter, whereCriteria, whereValues)
-      filters.filterActive(filter, whereCriteria, whereValues)
-      filters.filterCreatedAt(filter, whereCriteria, whereValues)
+      filters.filterTenantId(filter, whereCriteria, whereValues)
+      filters.filterTenantName(filter, whereCriteria, whereValues)
+      filters.filterTenantActive(filter, whereCriteria, whereValues)
+      filters.filterTenantCreatedAt(filter, whereCriteria, whereValues)
       filters.filterSearch(queryOptions.search, whereCriteria, whereValues)
 
       queryOptions.orderByColumn = filters.orderByColumn(queryOptions.orderByColumn, orderColumns, 't.uuid')
-
-      // queryOptions.orderByDir = filters.orderByDir(queryOptions.orderByDir)
 
       const next = {
         queryOptions,
@@ -50,11 +51,13 @@ module.exports = class TenantsRepository {
       .then(async next => {
         // Essa promise recupera o total de registros (sem filtro)
 
-        next.totalCount = (await db.getOne(`
+        const query = `
           SELECT COUNT(t.tenant_id) AS total
           FROM tenants t
           WHERE t.deleted_at IS NULL;
-        `)).total
+        `
+
+        next.totalCount = (await db.getOne(query)).total
 
         return next
       })
@@ -63,12 +66,14 @@ module.exports = class TenantsRepository {
 
         const values = Object.assign({}, next.whereValues)
 
-        next.filteredCount = (await db.getOne(`
+        const query = `
           SELECT COUNT(t.tenant_id) AS total
           FROM tenants t
           WHERE t.deleted_at IS NULL
           ${next.whereCriteria.length ? ` AND (${next.whereCriteria.join(' AND ')})` : ''}
-        `, values)).total
+        `
+
+        next.filteredCount = (await db.getOne(query, values)).total
 
         return next
       })
@@ -77,19 +82,22 @@ module.exports = class TenantsRepository {
 
         const values = Object.assign({}, next.whereValues)
 
-        next.data = await db.getAll(`
+        const query = `
           SELECT
-            t.uuid,
-            t.name,
-            t.active,
-            t.created_at,
-            t.altered_at
+            t.uuid AS tenantId,
+            t.name AS tenantName,
+            t.active AS tenantActive,
+            t.created_at AS tenantCreatedAt,
+            t.altered_at AS tenantAlteredAt
           FROM tenants t
           WHERE t.deleted_at IS NULL
           ${next.whereCriteria.length ? ` AND (${next.whereCriteria.join(' AND ')})` : ''}
+          ORDER BY ${next.queryOptions.orderByColumn} ${next.queryOptions.orderByDir}
           ${next.queryOptions.limit ? next.queryOptions.limit : ''};
           ;
-        `, values)
+        `
+
+        next.data = await db.getAll(query, values)
 
         return next
       })
@@ -97,11 +105,12 @@ module.exports = class TenantsRepository {
         // Essa promise formata os dados ou renomeia as colunas
 
         next.data = next.data.map(item => {
-          const newItem = {}
+          let newItem = {}
 
           for (const i in item) {
             if (typeof viewColumns[i] !== 'undefined') {
-              newItem[viewColumns[i]] = item[i]
+              // newItem[viewColumns[i]] = item[i]
+              newItem = makeObj(newItem, viewColumns[i], item[i])
             }
           }
 
@@ -149,11 +158,11 @@ module.exports = class TenantsRepository {
 
         const data = await db.getOne(`
           SELECT
-            t.uuid,
-            t.name,
-            t.active,
-            t.created_at,
-            t.altered_at
+            t.uuid AS tenantId,
+            t.name AS tenantName,
+            t.active AS tenantActive,
+            t.created_at AS tenantCreatedAt,
+            t.altered_at AS tenantAlteredAt
           FROM tenants t
           WHERE t.deleted_at IS NULL
           AND ${field} = ?;
@@ -169,11 +178,12 @@ module.exports = class TenantsRepository {
 
         if (!data) return data
 
-        const newItem = {}
+        let newItem = {}
 
         for (const i in data) {
           if (typeof viewColumns[i] !== 'undefined') {
-            newItem[viewColumns[i]] = data[i]
+            // newItem[viewColumns[i]] = data[i]
+            newItem = makeObj(newItem, viewColumns[i], data[i])
           }
         }
 
@@ -263,7 +273,7 @@ module.exports = class TenantsRepository {
   static async update (id = null, uuid = null, fields) {
     return this.findOneById(id, uuid)
       .then(async findRet => {
-        const data = findRet.content.data
+        const data = findRet.content.data.tenant
 
         const ret = new JsonReturn()
 
@@ -314,12 +324,12 @@ module.exports = class TenantsRepository {
       .then(async next => {
         if (next.fields.name) {
           const dataExists = await db.getOne(`
-            SELECT tenant_id
-            FROM tenants
-            WHERE deleted_at IS NULL
-            AND name = ?
-            AND uuid != ?;
-          `, [
+              SELECT tenant_id
+              FROM tenants
+              WHERE deleted_at IS NULL
+              AND name = ?
+              AND uuid != ?;
+            `, [
             next.fields.name,
             next.data.id
           ])
@@ -367,7 +377,7 @@ module.exports = class TenantsRepository {
           SET deleted_at = NOW()
           WHERE uuid = ?;
         `, [
-          findRet.content.data.id
+          findRet.content.data.tenant.id
         ])
       })
   }

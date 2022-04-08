@@ -30,7 +30,7 @@
                         <h3 class="box-title">Editar Inquilino</h3>
                     </div>
 
-                    <form @submit.prevent="updateTenant()">
+                    <form @submit.prevent="">
                         <div class="box-body">
                             <div class="alert" v-if="tenant.messages.length" :class="{
                                 'alert-danger': tenant.error,
@@ -99,7 +99,7 @@
                             </span>
                             <div class="pull-right">
                                 <button type="button" class="btn btn-link" :disabled="tenant.loading" @click.prevent="resetForm()">Redefinir</button>
-                                <button type="submit" class="btn btn-primary" :disabled="tenant.loading">Salvar</button>
+                                <button type="button" class="btn btn-primary" :disabled="tenant.loading" @click.prevent="updateTenant()">Salvar</button>
                             </div>
                         </div>
                     </form>

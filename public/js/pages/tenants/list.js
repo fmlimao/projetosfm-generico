@@ -15,7 +15,11 @@ mixins.push({
 
       try {
         const response = await axios.get('/api/tenants')
-        App.tenants.list = response.data.content.data
+
+        App.tenants.list = []
+        for (const row of response.data.content.data) {
+          App.tenants.list.push(row.tenant)
+        }
       } catch (error) {
         console.log('error', error)
         App.tenants.list = []
@@ -29,7 +33,7 @@ mixins.push({
         try {
           const response = await axios.delete(`/api/tenants/${tenant.id}`)
           App.getTenants()
-          alert('Inquilino removido com sucesso!')
+          App.notify('Inquilino removido com sucesso!', 'success')
         } catch (error) {
           console.log('error', error)
           alert(error.response.data.messages.join('<br>'))

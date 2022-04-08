@@ -1,76 +1,55 @@
+const filters = require('../../commons/helpers/filters')
 // const moment = require('moment')
 
-function sanitizeArrayFilter (filter, options = {}) {
-  filter = String(filter || '')
-
-  const helpers = options.helpers || []
-  const list = options.list || []
-
-  filter = filter
-    .split(',')
-    .map(item => {
-      item = item.trim()
-
-      for (const helper of helpers) item = helper(item)
-
-      return item
-    })
-    .filter(item => item !== null && item !== '')
-
-  if (list.length) filter = filter.filter(item => list.includes(item))
-
-  return filter
-}
-
-function filterUuid (filter, criterias, values) {
-  if (filter.id !== undefined) {
-    const ids = sanitizeArrayFilter(filter.id, {
+function filterTenantId (filter, criterias, values) {
+  if (filter.tenantId !== undefined) {
+    const ids = filters.sanitizeArrayFilter(filter.tenantId, {
       helpers: [item => String(item).trim()]
     })
 
     if (ids.length) {
-      criterias.push('t.uuid IN (:uuid)')
-      values.uuid = ids
+      criterias.push('t.uuid IN (:tenantId)')
+      values.tenantId = ids
     }
   }
 }
 
-function filterName (filter, criterias, values) {
-  if (filter.name !== undefined) {
-    criterias.push('t.name LIKE :name')
-    values.name = `%${filter.name}%`
+function filterTenantName (filter, criterias, values) {
+  if (filter.tenantName !== undefined) {
+    criterias.push('t.name LIKE :tenantName')
+    values.tenantName = `%${filter.tenantName}%`
   }
 }
 
-function filterActive (filter, criterias, values) {
-  if (filter.active !== undefined) {
-    const sanitizedValues = sanitizeArrayFilter(filter.active, {
+function filterTenantActive (filter, criterias, values) {
+  if (filter.tenantActive !== undefined) {
+    const sanitizedValues = filters.sanitizeArrayFilter(filter.tenantActive, {
       helpers: [item => Number(item)]
     })
 
     if (sanitizedValues.length) {
-      criterias.push('t.active IN (:active)')
-      values.active = sanitizedValues
+      criterias.push('t.active IN (:tenantActive)')
+      values.tenantActive = sanitizedValues
     }
   }
 }
 
-function filterCreatedAt (filter, criterias, values) {
+function filterTenantCreatedAt (filter, criterias, values) {
   // if (filter.initialCreatedAt === undefined || filter.finalCreatedAt === undefined) {
   //   filter.initialCreatedAt = moment().subtract(30, 'days').format('YYYY-MM-DD')
   //   filter.finalCreatedAt = moment().format('YYYY-MM-DD')
   // }
 
   // Filtro de Data de Abertura Inicial
-  if (filter.initialCreatedAt !== undefined) {
-    criterias.push('DATE(t.created_at) >= :initialCreatedAt')
-    values.initialCreatedAt = filter.initialCreatedAt
+  if (filter.tenantCreatedAtInitial !== undefined) {
+    criterias.push('DATE(t.created_at) >= :tenantCreatedAtInitial')
+    values.tenantCreatedAtInitial = filter.tenantCreatedAtInitial
   }
 
   // Filtro de Data de Abertura Final
-  if (filter.finalCreatedAt !== undefined) {
-    criterias.push('DATE(t.created_at) <= :finalCreatedAt')
-    values.finalCreatedAt = filter.finalCreatedAt
+  if (filter.tenantCreatedAtFinal !== undefined) {
+    criterias.push('DATE(t.created_at) <= :tenantCreatedAtFinal')
+    values.tenantCreatedAtFinal = filter.tenantCreatedAtFinal
   }
 }
 
@@ -80,42 +59,19 @@ function filterSearch (search, criterias, values) {
       t.uuid LIKE :search
       OR t.name LIKE :search
       OR t.active LIKE :search
-      OR t.locked LIKE :search
       OR t.created_at LIKE :search
+      OR t.altered_at LIKE :search
     )`)
     values.search = `%${search}%`
   }
 }
 
-function orderByColumn (column = null, columns = {}, defaultColumn) {
-  if (typeof columns[column] !== 'undefined') {
-    return columns[column]
-  }
-
-  return defaultColumn
-}
-
-function orderByDir (dir = null) {
-  if (dir) {
-    if (![
-      'ASC',
-      'DESC'
-    ].includes(dir.toUpperCase())) {
-      dir = 'ASC'
-    }
-  } else {
-    dir = 'ASC'
-  }
-
-  return dir
-}
-
 module.exports = {
-  filterUuid,
-  filterName,
-  filterActive,
-  filterCreatedAt,
+  filterTenantId,
+  filterTenantName,
+  filterTenantActive,
+  filterTenantCreatedAt,
   filterSearch,
-  orderByColumn,
-  orderByDir
+  orderByColumn: filters.orderByColumn,
+  orderByDir: filters.orderByDir
 }

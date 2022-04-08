@@ -12,11 +12,15 @@ router.use(getAuthMiddleware)
 
 router.get('/', verifyAuthMiddleware, require('./controllers/home/get'))
 
+// Inquilinos
 router.get('/tenants', verifyAuthMiddleware, require('./controllers/tenants/list'))
 router.post('/tenants', verifyAuthMiddleware, require('./controllers/tenants/store'))
 router.get('/tenants/:uuid', verifyAuthMiddleware, getTenant, require('./controllers/tenants/show'))
 router.put('/tenants/:uuid', verifyAuthMiddleware, getTenant, require('./controllers/tenants/update'))
 router.delete('/tenants/:uuid', verifyAuthMiddleware, getTenant, require('./controllers/tenants/remove'))
+
+// Inquilino - Usuários
+router.get('/tenants/:uuid/users', verifyAuthMiddleware, getTenant, require('./controllers/tenants/users/list'))
 
 router.use(require('./middlewares/error-404'))
 router.use(require('./middlewares/error-500'))
