@@ -24,7 +24,7 @@
             <div class="box-header with-border">
                 <h3 class="box-title">Lista de Inquilinos</h3>
                 <div class="box-tools pull-right">
-                    <button type="button" class="btn btn-box-tool" @click.prevent="getTenants()">
+                    <button type="button" class="btn btn-box-tool" @click.prevent="filterTenants()">
                         <i class="fa fa-refresh"></i>
                     </button>
                 </div>
@@ -44,75 +44,54 @@
                         <table class="table table-bordered">
                             <tbody>
                                 <tr>
-                                    <th style="width: 280px">
-                                        <a href="#" @click.prevent="filterTenants(null, 'tenantId')"
-                                            style="color: #333;">
-                                            ID
-                                            <span class="fa fa-sort-amount-asc" v-if="
-                                                tenants.meta.orderBy.column === 'tenantId'
-                                                && tenants.meta.orderBy.dir === 'ASC'
-                                            "></span>
-                                            <span class="fa fa-sort-amount-desc" v-if="
-                                                tenants.meta.orderBy.column === 'tenantId'
-                                                && tenants.meta.orderBy.dir === 'DESC'
-                                            "></span>
-                                        </a>
+                                    <th style="width: 280px" @click.prevent="filterTenants(null, 'tenantId')"
+                                        class="paginate-column">
+                                        ID
+                                        <span class="fa fa-sort-amount-asc pull-right"
+                                            v-if="tenants.meta.orderBy.column === 'tenantId' && tenants.meta.orderBy.dir === 'ASC'"></span>
+                                        <span class="fa fa-sort-amount-desc pull-right"
+                                            v-if="tenants.meta.orderBy.column === 'tenantId' && tenants.meta.orderBy.dir === 'DESC'"></span>
+                                        <span class="fa fa-sort-amount-asc pull-right text-muted"
+                                            v-if="tenants.meta.orderBy.column !== 'tenantId'"></span>
                                     </th>
-                                    <th>
-                                        <a href="#" @click.prevent="filterTenants(null, 'tenantName')"
-                                            style="color: #333;">
-                                            Nome
-                                            <span class="fa fa-sort-amount-asc" v-if="
-                                                tenants.meta.orderBy.column === 'tenantName'
-                                                && tenants.meta.orderBy.dir === 'ASC'
-                                            "></span>
-                                            <span class="fa fa-sort-amount-desc" v-if="
-                                                tenants.meta.orderBy.column === 'tenantName'
-                                                && tenants.meta.orderBy.dir === 'DESC'
-                                            "></span>
-                                        </a>
+                                    <th @click.prevent="filterTenants(null, 'tenantName')" class="paginate-column">
+                                        Nome
+                                        <span class="fa fa-sort-amount-asc pull-right"
+                                            v-if="tenants.meta.orderBy.column === 'tenantName' && tenants.meta.orderBy.dir === 'ASC'"></span>
+                                        <span class="fa fa-sort-amount-desc pull-right"
+                                            v-if="tenants.meta.orderBy.column === 'tenantName' && tenants.meta.orderBy.dir === 'DESC'"></span>
+                                        <span class="fa fa-sort-amount-asc pull-right text-muted"
+                                            v-if="tenants.meta.orderBy.column !== 'tenantName'"></span>
                                     </th>
-                                    <th style="width: 80px;" class="text-center">
-                                        <a href="#" @click.prevent="filterTenants(null, 'tenantActive')"
-                                            style="color: #333;">
-                                            Ativo
-                                            <span class="fa fa-sort-amount-asc" v-if="
-                                                tenants.meta.orderBy.column === 'tenantActive'
-                                                && tenants.meta.orderBy.dir === 'ASC'
-                                            "></span>
-                                            <span class="fa fa-sort-amount-desc" v-if="
-                                                tenants.meta.orderBy.column === 'tenantActive'
-                                                && tenants.meta.orderBy.dir === 'DESC'
-                                            "></span>
-                                        </a>
+                                    <th style="width: 80px;" @click.prevent="filterTenants(null, 'tenantActive')"
+                                        class="paginate-column text-center">
+                                        Ativo
+                                        <span class="fa fa-sort-amount-asc pull-right"
+                                            v-if="tenants.meta.orderBy.column === 'tenantActive' && tenants.meta.orderBy.dir === 'ASC'"></span>
+                                        <span class="fa fa-sort-amount-desc pull-right"
+                                            v-if="tenants.meta.orderBy.column === 'tenantActive' && tenants.meta.orderBy.dir === 'DESC'"></span>
+                                        <span class="fa fa-sort-amount-asc pull-right text-muted"
+                                            v-if="tenants.meta.orderBy.column !== 'tenantActive'"></span>
                                     </th>
-                                    <th style="width: 160px;" class="text-center">
-                                        <a href="#" @click.prevent="filterTenants(null, 'tenantCreatedAt')"
-                                            style="color: #333;">
-                                            Criado em
-                                            <span class="fa fa-sort-amount-asc" v-if="
-                                                tenants.meta.orderBy.column === 'tenantCreatedAt'
-                                                && tenants.meta.orderBy.dir === 'ASC'
-                                            "></span>
-                                            <span class="fa fa-sort-amount-desc" v-if="
-                                                tenants.meta.orderBy.column === 'tenantCreatedAt'
-                                                && tenants.meta.orderBy.dir === 'DESC'
-                                            "></span>
-                                        </a>
+                                    <th style="width: 160px;" @click.prevent="filterTenants(null, 'tenantCreatedAt')"
+                                        class="paginate-column text-center">
+                                        Criado em
+                                        <span class="fa fa-sort-amount-asc pull-right"
+                                            v-if="tenants.meta.orderBy.column === 'tenantCreatedAt' && tenants.meta.orderBy.dir === 'ASC'"></span>
+                                        <span class="fa fa-sort-amount-desc pull-right"
+                                            v-if="tenants.meta.orderBy.column === 'tenantCreatedAt' && tenants.meta.orderBy.dir === 'DESC'"></span>
+                                        <span class="fa fa-sort-amount-asc pull-right text-muted"
+                                            v-if="tenants.meta.orderBy.column !== 'tenantCreatedAt'"></span>
                                     </th>
-                                    <th style="width: 160px;" class="text-center">
-                                        <a href="#" @click.prevent="filterTenants(null, 'tenantAlteredAt')"
-                                            style="color: #333;">
-                                            Editado em
-                                            <span class="fa fa-sort-amount-asc" v-if="
-                                                tenants.meta.orderBy.column === 'tenantAlteredAt'
-                                                && tenants.meta.orderBy.dir === 'ASC'
-                                            "></span>
-                                            <span class="fa fa-sort-amount-desc" v-if="
-                                                tenants.meta.orderBy.column === 'tenantAlteredAt'
-                                                && tenants.meta.orderBy.dir === 'DESC'
-                                            "></span>
-                                        </a>
+                                    <th style="width: 160px;" @click.prevent="filterTenants(null, 'tenantAlteredAt')"
+                                        class="paginate-column text-center">
+                                        Editado em
+                                        <span class="fa fa-sort-amount-asc pull-right"
+                                            v-if="tenants.meta.orderBy.column === 'tenantAlteredAt' && tenants.meta.orderBy.dir === 'ASC'"></span>
+                                        <span class="fa fa-sort-amount-desc pull-right"
+                                            v-if="tenants.meta.orderBy.column === 'tenantAlteredAt' && tenants.meta.orderBy.dir === 'DESC'"></span>
+                                        <span class="fa fa-sort-amount-asc pull-right text-muted"
+                                            v-if="tenants.meta.orderBy.column !== 'tenantAlteredAt'"></span>
                                     </th>
                                     <th style="width: 160px;" class="text-center">Ações</th>
                                 </tr>
@@ -140,7 +119,7 @@
                                         </a>
 
                                         <a href="#" class="btn btn-danger btn-sm" title="Remover"
-                                            @click.prevent="removeTenant(tenant)">
+                                            @click.prevent="openRemoveTenant(tenant)">
                                             <span class="fa fa-trash"></span>
                                         </a>
                                     </td>
@@ -185,6 +164,29 @@
 
 
     </section>
+
+    <!-- Modal Remover Inquilino -->
+    <div class="modal fade" id="modalTenantRemove" tabindex="-1" role="dialog" aria-labelledby="modalTenantRemoveLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="modalTenantRemoveLabel">Remover Inquilino</h4>
+                </div>
+                <div class="modal-body">
+                    <p class="lead">Tem certeza que deseja remover o inquilino <b>"{{ tenantRemove.data.tenantName }}"</b>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal"
+                        :disabled="tenantRemove.loading">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnTenantRemove" :disabled="tenantRemove.loading"
+                        @click.prevent="removeTenant()">Remover</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <%- contentFor('scripts') %>
         <script src="/js/pages/tenants/list.js"></script>

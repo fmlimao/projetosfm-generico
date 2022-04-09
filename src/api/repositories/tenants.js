@@ -377,7 +377,7 @@ module.exports = class TenantsRepository {
           SET deleted_at = NOW()
           WHERE tenant_id = ?;
         `, [
-          findRet.content.data.tenant.id
+          findRet.content.data.tenantId
         ])
       })
   }

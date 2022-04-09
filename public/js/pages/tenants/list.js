@@ -5,6 +5,10 @@ mixins.push({
       loaded: false,
       list: [],
       meta: {}
+    },
+    tenantRemove: {
+      loading: false,
+      data: {}
     }
   },
   methods: {
@@ -38,7 +42,6 @@ mixins.push({
 
     filterTenants: (page, column) => {
       if (!page) page = App.tenants.meta.currentPage
-      if (!column) column = App.tenants.meta.orderBy.column
 
       const options = {
         start: (page - 1) * App.tenants.meta.length,
@@ -52,29 +55,45 @@ mixins.push({
 
         options.orderByColumn = column
         options.orderByDir = dir
+      } else {
+        options.orderByColumn = App.tenants.meta.orderBy.column
+        options.orderByDir = App.tenants.meta.orderBy.dir
       }
-
-      /**/console.log('filterTenants()', options);
 
       App.getTenants(options)
     },
 
-    removeTenant: async (tenant) => {
-      if (confirm(`Deseja realmente remover o inquilino ${tenant.name}?`)) {
-        try {
-          await axios.delete(`a/api/tenants/${tenant.id}`)
-          App.getTenants()
-          App.notify('Inquilino removido com sucesso!', 'success')
-        } catch (error) {
-          const response = error.response.data
+    openRemoveTenant: (tenant) => {
+      App.tenantRemove.data = tenant
 
-          if (typeof response === 'object' && response.messages !== undefined) {
-            App.notify(response.messages.join('<br>'), 'danger')
-          } else {
-            console.error(error)
-            App.notify('Ocorreu um erro interno. Por favor, tente novamente.', 'danger')
-          }
+      $('#modalTenantRemove').modal().on('shown.bs.modal', () => {
+        $('#btnTenantRemove').focus()
+      })
+    },
+
+    removeTenant: async () => {
+      App.tenantRemove.loading = true
+
+      try {
+        await axios.delete(`/api/tenants/${App.tenantRemove.data.tenantId}`)
+        App.filterTenants()
+        App.notify('Inquilino removido com sucesso!', 'success')
+        App.tenantRemove.loading = false
+        $('#modalTenantRemove').modal('hide')
+      } catch (error) {
+        if (
+          typeof error.response === 'object' &&
+          typeof error.response.data === 'object'
+          && error.response.data.messages !== undefined
+        ) {
+          const response = error.response.data
+          App.notify(response.messages.join('<br>'), 'danger')
+        } else {
+          console.error(error)
+          App.notify('Ocorreu um erro interno. Por favor, tente novamente.', 'danger')
         }
+
+        App.tenantRemove.loading = false
       }
     }
   }
