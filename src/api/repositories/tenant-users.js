@@ -1,35 +1,34 @@
 const db = require('../../commons/database/conn')
 const filters = require('../filters/tenant-users')
 const generateOptions = require('../../commons/helpers/generate-options')
-const makeObj = require('../../commons/helpers/make-obj')
+// const makeObj = require('../../commons/helpers/make-obj')
 const JsonReturn = require('fm-json-response')
 // const keysGenerator = require('../../commons/helpers/key-generator')
 // const validator = require('fm-validator')
 
 const orderColumns = {
-  'user:id': 'u.user_id',
-  'person:id': 'p.person_id',
-  'person:name': 'p.name',
-  'user:email': 'u.email',
-  'user:active': 'u.active',
-  'user:createdAt': 't.created_at',
-  'user:alteredAt': 't.altered_at'
+  userId: 'u.user_id',
+  personId: 'p.person_id',
+  personName: 'p.name',
+  userEmail: 'u.email',
+  userActive: 'u.active',
+  userCreatedAt: 't.created_at',
+  userAlteredAt: 't.altered_at'
 }
 
 const viewColumns = {
-  userId: 'user:id',
-  personId: 'person:id',
-  personName: 'person:name',
-  userEmail: 'user:email',
-  userActive: 'user:active',
-  userCreatedAt: 'user:createdAt',
-  userAlteredAt: 'user:alteredAt'
+  userId: 'userId',
+  personId: 'personId',
+  personName: 'personName',
+  userEmail: 'userEmail',
+  userActive: 'userActive',
+  userCreatedAt: 'userCreatedAt',
+  userAlteredAt: 'userAlteredAt'
 }
 
 module.exports = class TenantUsersRepository {
   static async findAll (tenantId = null, { filter = {} } = {}) {
     return new Promise(resolve => {
-      /**/console.log('tenantId', tenantId)
       // Essa promise serve para recuperar os filtros da busca
 
       const queryOptions = generateOptions(filter)
@@ -125,8 +124,6 @@ module.exports = class TenantUsersRepository {
           ORDER BY ${next.queryOptions.orderByColumn} ${next.queryOptions.orderByDir}
           ${next.queryOptions.limit ? next.queryOptions.limit : ''};
         `
-        /**/console.log('query', query)
-        /**/console.log('values', values)
 
         next.data = await db.getAll(query, values)
 
@@ -136,12 +133,12 @@ module.exports = class TenantUsersRepository {
         // Essa promise formata os dados ou renomeia as colunas
 
         next.data = next.data.map(item => {
-          let newItem = {}
+          const newItem = {}
 
           for (const i in item) {
             if (typeof viewColumns[i] !== 'undefined') {
-              // newItem[viewColumns[i]] = item[i]
-              newItem = makeObj(newItem, viewColumns[i], item[i])
+              newItem[viewColumns[i]] = item[i]
+              // newItem = makeObj(newItem, viewColumns[i], item[i])
             }
           }
 
@@ -157,6 +154,11 @@ module.exports = class TenantUsersRepository {
         const pages = Math.ceil(next.filteredCount / length)
         const currentPage = start / length + 1
 
+        const columns = {}
+        for (const i in orderColumns) {
+          columns[orderColumns[i]] = i
+        }
+
         const ret = new JsonReturn()
 
         const meta = {
@@ -165,7 +167,11 @@ module.exports = class TenantUsersRepository {
           start,
           length,
           pages,
-          currentPage
+          currentPage,
+          orderBy: {
+            column: columns[next.queryOptions.orderByColumn],
+            dir: next.queryOptions.orderByDir
+          }
         }
 
         ret.addContent('meta', meta)

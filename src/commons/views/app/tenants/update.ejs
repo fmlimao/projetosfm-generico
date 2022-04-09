@@ -4,7 +4,7 @@
     <section class="content-header">
         <h1>
             <i class="fa fa-users"></i> Inquilinos - {{ tenant.oldValues.name }}
-            (#{{ tenant.oldValues.uuid }})
+            (#{{ tenant.oldValues.tenantId }})
         </h1>
         <ol class="breadcrumb">
             <li><a href="/app"><i class="fa fa-home"></i> Home</a></li>
@@ -60,10 +60,10 @@
                                         <label>Ativo</label>
                                         <p class="form-control-static">
                                             <span class="material-switch">
-                                                <input :id="'tenantActiveSwitch_' + tenant.oldValues.uuid"
-                                                    :name="'tenantActiveSwitch_' + tenant.oldValues.uuid"
+                                                <input :id="'tenantActiveSwitch_' + tenant.oldValues.tenantId"
+                                                    :name="'tenantActiveSwitch_' + tenant.oldValues.tenantId"
                                                     type="checkbox" v-model="tenant.newValues.active">
-                                                <label :for="'tenantActiveSwitch_' + tenant.oldValues.uuid"
+                                                <label :for="'tenantActiveSwitch_' + tenant.oldValues.tenantId"
                                                     class="label-success"></label>
                                             </span>
                                         </p>
@@ -120,11 +120,11 @@
                     <div class="box-header with-border">
                         <h3 class="box-title">Lista de Usuários</h3>
                         <div class="box-tools pull-right">
-                            <a :href="`/app/tenants/${tenant.oldValues.uuid}/users/create`" class="btn btn-box-tool">
+                            <a :href="`/app/tenants/${tenant.oldValues.tenantId}/users/create`" class="btn btn-box-tool">
                                 <i class="fa fa-plus"></i>
                             </a>
 
-                            <button type="button" class="btn btn-box-tool" @click.prevent="getUsers()">
+                            <button type="button" class="btn btn-box-tool" @click.prevent="filterUsers()">
                                 <i class="fa fa-refresh"></i>
                             </button>
                         </div>
@@ -138,58 +138,140 @@
                         <div class="alert alert-warning">Nenhum usuário cadastrado</div>
                     </div>
 
-                    <div class="box-body no-padding" v-if="users.loaded && users.list.length">
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <tbody>
-                                    <tr>
-                                        <th style="width: 200px">ID</th>
-                                        <th>Nome</th>
-                                        <th>E-mail</th>
-                                        <th style="width: 80px;" class="text-center">Ativo</th>
-                                        <th style="width: 160px;" class="text-center">Criado em</th>
-                                        <th style="width: 160px;" class="text-center">Editado em</th>
-                                        <th style="width: 160px;" class="text-center">Ações</th>
-                                    </tr>
-                                    <tr v-for="user in users.list">
-                                        <td>
-                                            <a :href="`/app/tenants/${tenant.oldValues.uuid}/users/${user.user.id}`">
-                                                {{ user.user.id }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <a :href="`/app/tenants/${tenant.oldValues.uuid}/users/${user.user.id}`">
-                                                {{ user.person.name }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <a :href="`/app/tenants/${tenant.oldValues.uuid}/users/${user.user.id}`">
-                                                {{ user.user.email }}
-                                            </a>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="fa fa-check text-success" v-if="user.user.active"></span>
-                                            <span class="fa fa-times text-danger" v-if="!user.user.active"></span>
-                                        </td>
-                                        <td class="text-center">
-                                            {{ moment(user.user.createdAt).format('DD/MM/YYYY HH:mm:ss') }}
-                                        </td>
-                                        <td class="text-center">
-                                            {{ moment(user.user.alteredAt).format('DD/MM/YYYY HH:mm:ss') }}
-                                        </td>
-                                        <td class="text-center" nowrap>
-                                            <a :href="`/app/tenants/${tenant.oldValues.uuid}/users/${user.user.id}`" class="btn btn-default btn-sm" title="Editar">
-                                                <span class="fa fa-pencil"></span>
-                                            </a>
+                    <div v-if="users.loaded && users.list.length">
+                        <div class="box-body no-padding">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <th style="width: 280px" @click.prevent="filterUsers(null, 'userId')"
+                                                class="paginate-column">
+                                                ID
+                                                <span class="fa fa-sort-amount-asc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'userId' && users.meta.orderBy.dir === 'ASC'"></span>
+                                                <span class="fa fa-sort-amount-desc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'userId' && users.meta.orderBy.dir === 'DESC'"></span>
+                                                <span class="fa fa-sort-amount-asc pull-right text-muted"
+                                                    v-if="users.meta.orderBy.column !== 'userId'"></span>
+                                            </th>
+                                            <th @click.prevent="filterUsers(null, 'personName')"
+                                                class="paginate-column">
+                                                Nome
+                                                <span class="fa fa-sort-amount-asc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'personName' && users.meta.orderBy.dir === 'ASC'"></span>
+                                                <span class="fa fa-sort-amount-desc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'personName' && users.meta.orderBy.dir === 'DESC'"></span>
+                                                <span class="fa fa-sort-amount-asc pull-right text-muted"
+                                                    v-if="users.meta.orderBy.column !== 'personName'"></span>
+                                            </th>
+                                            <th @click.prevent="filterUsers(null, 'userEmail')"
+                                                class="paginate-column">
+                                                E-mail
+                                                <span class="fa fa-sort-amount-asc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'userEmail' && users.meta.orderBy.dir === 'ASC'"></span>
+                                                <span class="fa fa-sort-amount-desc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'userEmail' && users.meta.orderBy.dir === 'DESC'"></span>
+                                                <span class="fa fa-sort-amount-asc pull-right text-muted"
+                                                    v-if="users.meta.orderBy.column !== 'userEmail'"></span>
+                                            </th>
+                                            <th style="width: 80px;" @click.prevent="filterUsers(null, 'userActive')"
+                                                class="paginate-column">
+                                                Ativo
+                                                <span class="fa fa-sort-amount-asc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'userActive' && users.meta.orderBy.dir === 'ASC'"></span>
+                                                <span class="fa fa-sort-amount-desc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'userActive' && users.meta.orderBy.dir === 'DESC'"></span>
+                                                <span class="fa fa-sort-amount-asc pull-right text-muted"
+                                                    v-if="users.meta.orderBy.column !== 'userActive'"></span>
+                                            </th>
+                                            <th style="width: 160px;" @click.prevent="filterUsers(null, 'userCreatedAt')"
+                                                class="paginate-column">
+                                                Criado em
+                                                <span class="fa fa-sort-amount-asc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'userCreatedAt' && users.meta.orderBy.dir === 'ASC'"></span>
+                                                <span class="fa fa-sort-amount-desc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'userCreatedAt' && users.meta.orderBy.dir === 'DESC'"></span>
+                                                <span class="fa fa-sort-amount-asc pull-right text-muted"
+                                                    v-if="users.meta.orderBy.column !== 'userCreatedAt'"></span>
+                                            </th>
+                                            <th style="width: 160px;" @click.prevent="filterUsers(null, 'userAlteredAt')"
+                                                class="paginate-column">
+                                                Editado em
+                                                <span class="fa fa-sort-amount-asc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'userAlteredAt' && users.meta.orderBy.dir === 'ASC'"></span>
+                                                <span class="fa fa-sort-amount-desc pull-right"
+                                                    v-if="users.meta.orderBy.column === 'userAlteredAt' && users.meta.orderBy.dir === 'DESC'"></span>
+                                                <span class="fa fa-sort-amount-asc pull-right text-muted"
+                                                    v-if="users.meta.orderBy.column !== 'userAlteredAt'"></span>
+                                            </th>
+                                            <th style="width: 160px;" class="text-center">Ações</th>
+                                        </tr>
+                                        <tr v-for="user in users.list">
+                                            <td>
+                                                <a :href="`/app/tenants/${tenant.oldValues.tenantId}/users/${user.userId}`">
+                                                    {{ user.userId }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <a :href="`/app/tenants/${tenant.oldValues.tenantId}/users/${user.userId}`">
+                                                    {{ user.personName }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <a :href="`/app/tenants/${tenant.oldValues.tenantId}/users/${user.userId}`">
+                                                    {{ user.userEmail }}
+                                                </a>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="fa fa-check text-success" v-if="user.userActive"></span>
+                                                <span class="fa fa-times text-danger" v-if="!user.userActive"></span>
+                                            </td>
+                                            <td class="text-center">
+                                                {{ moment(user.userCreatedAt).format('DD/MM/YYYY HH:mm:ss') }}
+                                            </td>
+                                            <td class="text-center">
+                                                {{ moment(user.userAlteredAt).format('DD/MM/YYYY HH:mm:ss') }}
+                                            </td>
+                                            <td class="text-center" nowrap>
+                                                <a :href="`/app/tenants/${tenant.oldValues.tenantId}/users/${user.userId}`" class="btn btn-default btn-sm" title="Editar">
+                                                    <span class="fa fa-pencil"></span>
+                                                </a>
 
-                                            <a href="#" class="btn btn-danger btn-sm" title="Remover"
-                                                @click.prevent="removeUser(user)">
-                                                <span class="fa fa-trash"></span>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                                <a href="#" class="btn btn-danger btn-sm" title="Remover"
+                                                    @click.prevent="removeUser(user)">
+                                                    <span class="fa fa-trash"></span>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="box-footer">
+                            <div class="row">
+                                <div class="col-xs-12 col-md-4">
+                                    <p style="line-height: 34px;">
+                                        <span class="text-muted">Mostrando de {{ users.meta.start + 1 }} até {{
+                                            users.meta.start +
+                                            users.list.length }} de {{ users.meta.totalCount }}</span>
+                                    </p>
+                                </div>
+
+                                <div class="col-xs-12 col-sm-8 text-right">
+                                    <nav>
+                                        <ul class="pagination" style="margin-top: 0;">
+                                            <li v-for="b in makePagination(users.meta)" :class="{
+                                                'active': b.active,
+                                                'disabled': b.disabled
+                                            }">
+                                                <a href="#" @click.prevent="b.page ? filterUsers(b.page) : false;"
+                                                    v-html="b.label" :disabled="b.disabled"></a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -197,6 +279,7 @@
                         <i class="fa fa-refresh fa-spin"></i>
                     </div>
                 </div>
+                <!-- /.box -->
             </div>
             <!-- /.col -->
 

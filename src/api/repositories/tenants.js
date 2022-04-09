@@ -1,7 +1,7 @@
 const db = require('../../commons/database/conn')
 const filters = require('../filters/tenants')
 const generateOptions = require('../../commons/helpers/generate-options')
-const makeObj = require('../../commons/helpers/make-obj')
+// const makeObj = require('../../commons/helpers/make-obj')
 const JsonReturn = require('fm-json-response')
 const validator = require('fm-validator')
 
@@ -178,12 +178,12 @@ module.exports = class TenantsRepository {
 
         if (!data) return data
 
-        let newItem = {}
+        const newItem = {}
 
         for (const i in data) {
           if (typeof viewColumns[i] !== 'undefined') {
-            // newItem[viewColumns[i]] = data[i]
-            newItem = makeObj(newItem, viewColumns[i], data[i])
+            newItem[viewColumns[i]] = data[i]
+            // newItem = makeObj(newItem, viewColumns[i], data[i])
           }
         }
 
@@ -273,7 +273,7 @@ module.exports = class TenantsRepository {
   static async update (tenantId, fields) {
     return this.findOneById(tenantId)
       .then(async findRet => {
-        const data = findRet.content.data.tenant
+        const data = findRet.content.data
 
         const ret = new JsonReturn()
 
@@ -331,7 +331,7 @@ module.exports = class TenantsRepository {
               AND tenant_id != ?;
             `, [
             next.fields.name,
-            next.data.id
+            next.data.tenantId
           ])
 
           if (dataExists) {
@@ -348,8 +348,8 @@ module.exports = class TenantsRepository {
         return next
       })
       .then(next => {
-        if (typeof next.fields.name !== 'undefined') next.data.name = next.fields.name
-        if (typeof next.fields.active !== 'undefined') next.data.active = Number(next.fields.active)
+        if (typeof next.fields.name !== 'undefined') next.data.tenantName = next.fields.name
+        if (typeof next.fields.active !== 'undefined') next.data.tenantActive = Number(next.fields.active)
 
         return next
       })
@@ -357,15 +357,16 @@ module.exports = class TenantsRepository {
         await db.update(`
           UPDATE tenants
           SET name = ?,
-          active = ?
+          active = ?,
+          altered_at = NOW()
           WHERE tenant_id = ?;
         `, [
-          next.data.name,
-          next.data.active,
-          next.data.id
+          next.data.tenantName,
+          next.data.tenantActive,
+          next.data.tenantId
         ])
 
-        return this.findOneById(next.data.id)
+        return this.findOneById(next.data.tenantId)
       })
   }
 

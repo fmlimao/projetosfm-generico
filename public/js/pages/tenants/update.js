@@ -18,7 +18,7 @@ mixins.push({
       },
 
       newValues: {
-        uuid: tenantId,
+        tenantId: tenantId,
         name: '',
         active: false,
         createdAt: '',
@@ -26,7 +26,7 @@ mixins.push({
       },
 
       oldValues: {
-        uuid: tenantId,
+        tenantId: tenantId,
         name: '',
         active: false,
         createdAt: '',
@@ -37,7 +37,8 @@ mixins.push({
     users: {
       loading: false,
       loaded: false,
-      list: []
+      list: [],
+      meta: {}
     }
   },
   methods: {
@@ -57,17 +58,17 @@ mixins.push({
       App.tenant.loading = true
 
       try {
-        const response = (await axios.get(`/api/tenants/${App.tenant.oldValues.uuid}`)).data.content.data.tenant
+        const response = (await axios.get(`/api/tenants/${App.tenant.oldValues.tenantId}`)).data.content.data
 
-        App.tenant.oldValues.name = response.name
-        App.tenant.oldValues.active = !!response.active
-        App.tenant.oldValues.createdAt = response.createdAt
-        App.tenant.oldValues.alteredAt = response.alteredAt
+        App.tenant.oldValues.name = response.tenantName
+        App.tenant.oldValues.active = !!response.tenantActive
+        App.tenant.oldValues.createdAt = response.tenantCreatedAt
+        App.tenant.oldValues.alteredAt = response.tenantAlteredAt
 
-        App.tenant.newValues.name = response.name
-        App.tenant.newValues.active = !!response.active
-        App.tenant.newValues.createdAt = response.createdAt
-        App.tenant.newValues.alteredAt = response.alteredAt
+        App.tenant.newValues.name = response.tenantName
+        App.tenant.newValues.active = !!response.tenantActive
+        App.tenant.newValues.createdAt = response.tenantCreatedAt
+        App.tenant.newValues.alteredAt = response.tenantAlteredAt
 
         if (cb) cb()
       } catch (error) {
@@ -91,7 +92,7 @@ mixins.push({
       App.tenant.newValues.name = App.tenant.newValues.name.trim()
 
       try {
-        const response = (await axios.put(`/api/tenants/${App.tenant.oldValues.uuid}`, {
+        (await axios.put(`/api/tenants/${App.tenant.oldValues.tenantId}`, {
           name: App.tenant.newValues.name,
           active: App.tenant.newValues.active ? 1 : 0,
         })).data.content.data
@@ -132,12 +133,13 @@ mixins.push({
       App.tenant.newValues = JSON.parse(JSON.stringify(App.tenant.oldValues))
     },
 
-    getUsers: async () => {
+    getUsers: async (params = {}) => {
       App.users.loading = true
 
       try {
-        /**/console.log(`/api/tenants/${App.tenant.oldValues.uuid}/users`);
-        const response = await axios.get(`/api/tenants/${App.tenant.oldValues.uuid}/users`)
+        const response = await axios.get(`/api/tenants/${App.tenant.oldValues.tenantId}/users`, { params })
+
+        App.users.meta = response.data.content.meta
 
         App.users.list = []
         for (const row of response.data.content.data) {
@@ -150,6 +152,29 @@ mixins.push({
 
       App.users.loading = false
       App.users.loaded = true
+    },
+
+    filterUsers: (page, column) => {
+      if (!page) page = App.users.meta.currentPage
+
+      const options = {
+        start: (page - 1) * App.users.meta.length,
+      }
+
+      if (column) {
+        let dir = 'ASC'
+        if (column === App.users.meta.orderBy.column) {
+          dir = App.users.meta.orderBy.dir === 'ASC' ? 'DESC' : 'ASC'
+        }
+
+        options.orderByColumn = column
+        options.orderByDir = dir
+      } else {
+        options.orderByColumn = App.users.meta.orderBy.column
+        options.orderByDir = App.users.meta.orderBy.dir
+      }
+
+      App.getUsers(options)
     },
 
     removeUser: (user) => {},

@@ -17,9 +17,8 @@ mixins.push({
   },
   methods: {
     init: () => {
-      App.tenant.fields.name.value = 'Teste 13'
-
-      App.addTenant()
+      // App.tenant.fields.name.value = 'Teste 13'
+      // App.addTenant()
     },
 
     addTenant: async () => {
@@ -34,7 +33,7 @@ mixins.push({
       try {
         const response = (await axios.post('/api/tenants', {
           name: App.tenant.fields.name.value
-        })).data.content.data.tenant
+        })).data.content.data
 
         // App.tenant.messages = [
         //   'Inquilino adicionado com sucesso!'
@@ -43,7 +42,7 @@ mixins.push({
         App.notify('Inquilino adicionado com sucesso!', 'success');
 
         setTimeout(() => {
-          window.location.replace(`/app/tenants/${response.id}`)
+          window.location.replace(`/app/tenants/${response.tenantId}`)
         }, 2000)
       } catch (error) {
         const response = error.response.data
