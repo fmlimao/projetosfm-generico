@@ -1,11 +1,12 @@
 .save-bar {
   position: fixed;
-  left: 50%;
+  left: 16px;
+  right: 16px;
   bottom: 16px;
-  margin-left: -400px;
+  // margin-left: -400px;
   padding: 16px;
 
-  width: 800px;
+  // width: 800px;
   height: 66px;
   line-height: 34px;
 
@@ -16,6 +17,14 @@
   background-color: #1e282c;
   color: #fff;
 
+  span {
+    display: none;
+  }
+
+  .actions {
+    text-align: center;
+  }
+
   .btn-link {
     color: #fff;
   }
@@ -25,5 +34,20 @@
 
   &.active {
     margin-bottom: 0;
+  }
+
+  @media screen and (min-width: 992px) {
+    left: 50%;
+    margin-left: -400px;
+    width: 800px;
+
+    span {
+      display: inline;
+    }
+
+    .actions {
+      text-align: left;
+      float: right;
+    }
   }
 }

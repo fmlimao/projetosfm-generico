@@ -7,7 +7,7 @@ function filterUserId (filter, criterias, values) {
     })
 
     if (ids.length) {
-      criterias.push('u.uuid IN (:userUuid)')
+      criterias.push('u.user_id IN (:userUuid)')
       values.userUuid = ids
     }
   }
@@ -54,7 +54,7 @@ function filterPersonId (filter, criterias, values) {
     })
 
     if (ids.length) {
-      criterias.push('p.uuid IN (:personUuid)')
+      criterias.push('p.person_id IN (:personUuid)')
       values.personUuid = ids
     }
   }
@@ -70,8 +70,8 @@ function filterPersonName (filter, criterias, values) {
 function filterSearch (search, criterias, values) {
   if (search.length) {
     criterias.push(`(
-      u.uuid LIKE :search
-      OR p.uuid LIKE :search
+      u.user_id LIKE :search
+      OR p.person_id LIKE :search
       OR p.name LIKE :search
       OR u.email LIKE :search
       OR u.active LIKE :search

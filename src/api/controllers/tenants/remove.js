@@ -4,9 +4,9 @@ module.exports = async (req, res) => {
   let ret = req.ret()
 
   try {
-    const { uuid } = req.params
+    const { tenantId } = req.params
 
-    await TenantsRepository.delete(null, uuid)
+    await TenantsRepository.delete(tenantId)
 
     ret.setCode(204)
     res.status(ret.getCode()).json(ret.generate())

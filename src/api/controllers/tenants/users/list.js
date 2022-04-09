@@ -4,8 +4,8 @@ module.exports = async (req, res) => {
   let ret = req.ret()
 
   try {
-    const { uuid } = req.params
-    const users = await TenantUsersRepository.findAll(null, uuid, {
+    const { tenantId } = req.params
+    const users = await TenantUsersRepository.findAll(tenantId, {
       filter: req.query || {}
     })
 

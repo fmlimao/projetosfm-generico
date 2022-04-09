@@ -33,11 +33,18 @@ mixins.push({
         alteredAt: '',
       }
     },
+
+    users: {
+      loading: false,
+      loaded: false,
+      list: []
+    }
   },
   methods: {
     init: () => {
       App.getTenant(() => {
-        // App.tenant.newValues.name = 'Inquilino novo 2';
+        App.getUsers()
+        // App.tenant.newValues.name = 'Master 2';
         // App.tenant.newValues.name = '';
 
         // setTimeout(() => {
@@ -123,6 +130,28 @@ mixins.push({
     resetForm: () => {
       /**/console.log('resetForm()');
       App.tenant.newValues = JSON.parse(JSON.stringify(App.tenant.oldValues))
-    }
+    },
+
+    getUsers: async () => {
+      App.users.loading = true
+
+      try {
+        /**/console.log(`/api/tenants/${App.tenant.oldValues.uuid}/users`);
+        const response = await axios.get(`/api/tenants/${App.tenant.oldValues.uuid}/users`)
+
+        App.users.list = []
+        for (const row of response.data.content.data) {
+          App.users.list.push(row)
+        }
+      } catch (error) {
+        console.log('error', error)
+        App.users.list = []
+      }
+
+      App.users.loading = false
+      App.users.loaded = true
+    },
+
+    removeUser: (user) => {},
   }
 })

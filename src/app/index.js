@@ -22,9 +22,13 @@ router.get('/logout', require('./controllers/logout/get'))
 
 router.get('/', verifyAuthMiddleware, require('./controllers/home/get'))
 
+// Inquilinos
 router.get('/tenants', verifyAuthMiddleware, require('./controllers/tenants/list'))
 router.get('/tenants/create', verifyAuthMiddleware, require('./controllers/tenants/create'))
 router.get('/tenants/:uuid', verifyAuthMiddleware, require('./controllers/tenants/update'))
+
+// Inquilinos - Usuários
+// router.get('/tenants/users/:tenandId/create', verifyAuthMiddleware, require('./controllers/tenants/create'))
 
 router.use(require('./middlewares/error-404'))
 router.use(require('./middlewares/error-500'))

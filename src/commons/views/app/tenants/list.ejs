@@ -38,48 +38,145 @@
                 <div class="alert alert-warning">Nenhum inquilino cadastrado</div>
             </div>
 
-            <div class="box-body no-padding" v-if="tenants.loaded && tenants.list.length">
-                <table class="table table-bordered">
-                    <tbody>
-                        <tr>
-                            <th style="width: 200px">ID</th>
-                            <th>Nome</th>
-                            <th style="width: 80px;" class="text-center">Ativo</th>
-                            <th style="width: 160px;" class="text-center">Criado em</th>
-                            <th style="width: 160px;" class="text-center">Editado em</th>
-                            <th style="width: 160px;" class="text-center">Ações</th>
-                        </tr>
-                        <tr v-for="tenant in tenants.list">
-                            <td>
-                                <a :href="`/app/tenants/${tenant.id}`">{{ tenant.id }}</a>
-                            </td>
-                            <td>
-                                <a :href="`/app/tenants/${tenant.id}`">{{ tenant.name }}</a>
-                            </td>
-                            <td class="text-center">
-                                <span class="fa fa-check text-success" v-if="tenant.active"></span>
-                                <span class="fa fa-times text-danger" v-if="!tenant.active"></span>
-                            </td>
-                            <td class="text-center">
-                                {{ moment(tenant.createdAt).format('DD/MM/YYYY HH:mm:ss') }}
-                            </td>
-                            <td class="text-center">
-                                {{ moment(tenant.alteredAt).format('DD/MM/YYYY HH:mm:ss') }}
-                            </td>
-                            <td class="text-center">
-                                <a :href="`/app/tenants/${tenant.id}`" class="btn btn-default btn-sm" title="Editar">
-                                    <span class="fa fa-pencil"></span>
-                                </a>
+            <div v-if="tenants.loaded && tenants.list.length">
+                <div class="box-body no-padding">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tbody>
+                                <tr>
+                                    <th style="width: 280px">
+                                        <a href="#" @click.prevent="filterTenants(null, 'tenantId')"
+                                            style="color: #333;">
+                                            ID
+                                            <span class="fa fa-sort-amount-asc" v-if="
+                                                tenants.meta.orderBy.column === 'tenantId'
+                                                && tenants.meta.orderBy.dir === 'ASC'
+                                            "></span>
+                                            <span class="fa fa-sort-amount-desc" v-if="
+                                                tenants.meta.orderBy.column === 'tenantId'
+                                                && tenants.meta.orderBy.dir === 'DESC'
+                                            "></span>
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="#" @click.prevent="filterTenants(null, 'tenantName')"
+                                            style="color: #333;">
+                                            Nome
+                                            <span class="fa fa-sort-amount-asc" v-if="
+                                                tenants.meta.orderBy.column === 'tenantName'
+                                                && tenants.meta.orderBy.dir === 'ASC'
+                                            "></span>
+                                            <span class="fa fa-sort-amount-desc" v-if="
+                                                tenants.meta.orderBy.column === 'tenantName'
+                                                && tenants.meta.orderBy.dir === 'DESC'
+                                            "></span>
+                                        </a>
+                                    </th>
+                                    <th style="width: 80px;" class="text-center">
+                                        <a href="#" @click.prevent="filterTenants(null, 'tenantActive')"
+                                            style="color: #333;">
+                                            Ativo
+                                            <span class="fa fa-sort-amount-asc" v-if="
+                                                tenants.meta.orderBy.column === 'tenantActive'
+                                                && tenants.meta.orderBy.dir === 'ASC'
+                                            "></span>
+                                            <span class="fa fa-sort-amount-desc" v-if="
+                                                tenants.meta.orderBy.column === 'tenantActive'
+                                                && tenants.meta.orderBy.dir === 'DESC'
+                                            "></span>
+                                        </a>
+                                    </th>
+                                    <th style="width: 160px;" class="text-center">
+                                        <a href="#" @click.prevent="filterTenants(null, 'tenantCreatedAt')"
+                                            style="color: #333;">
+                                            Criado em
+                                            <span class="fa fa-sort-amount-asc" v-if="
+                                                tenants.meta.orderBy.column === 'tenantCreatedAt'
+                                                && tenants.meta.orderBy.dir === 'ASC'
+                                            "></span>
+                                            <span class="fa fa-sort-amount-desc" v-if="
+                                                tenants.meta.orderBy.column === 'tenantCreatedAt'
+                                                && tenants.meta.orderBy.dir === 'DESC'
+                                            "></span>
+                                        </a>
+                                    </th>
+                                    <th style="width: 160px;" class="text-center">
+                                        <a href="#" @click.prevent="filterTenants(null, 'tenantAlteredAt')"
+                                            style="color: #333;">
+                                            Editado em
+                                            <span class="fa fa-sort-amount-asc" v-if="
+                                                tenants.meta.orderBy.column === 'tenantAlteredAt'
+                                                && tenants.meta.orderBy.dir === 'ASC'
+                                            "></span>
+                                            <span class="fa fa-sort-amount-desc" v-if="
+                                                tenants.meta.orderBy.column === 'tenantAlteredAt'
+                                                && tenants.meta.orderBy.dir === 'DESC'
+                                            "></span>
+                                        </a>
+                                    </th>
+                                    <th style="width: 160px;" class="text-center">Ações</th>
+                                </tr>
+                                <tr v-for="tenant in tenants.list">
+                                    <td>
+                                        <a :href="`/app/tenants/${tenant.tenantId}`">{{ tenant.tenantId }}</a>
+                                    </td>
+                                    <td>
+                                        <a :href="`/app/tenants/${tenant.tenantId}`">{{ tenant.tenantName }}</a>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fa fa-check text-success" v-if="tenant.tenantActive"></span>
+                                        <span class="fa fa-times text-danger" v-if="!tenant.tenantActive"></span>
+                                    </td>
+                                    <td class="text-center">
+                                        {{ moment(tenant.tenantCreatedAt).format('DD/MM/YYYY HH:mm:ss') }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ moment(tenant.tenantAlteredAt).format('DD/MM/YYYY HH:mm:ss') }}
+                                    </td>
+                                    <td class="text-center">
+                                        <a :href="`/app/tenants/${tenant.tenantId}`" class="btn btn-default btn-sm"
+                                            title="Editar">
+                                            <span class="fa fa-pencil"></span>
+                                        </a>
 
-                                <a href="#" class="btn btn-danger btn-sm" title="Remover"
-                                    @click.prevent="removeTenant(tenant)">
-                                    <span class="fa fa-trash"></span>
-                                </a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                        <a href="#" class="btn btn-danger btn-sm" title="Remover"
+                                            @click.prevent="removeTenant(tenant)">
+                                            <span class="fa fa-trash"></span>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="box-footer">
+                    <div class="row">
+                        <div class="col-xs-12 col-md-4">
+                            <p style="line-height: 34px;">
+                                <span class="text-muted">Mostrando de {{ tenants.meta.start + 1 }} até {{
+                                    tenants.meta.start +
+                                    tenants.list.length }} de {{ tenants.meta.totalCount }}</span>
+                            </p>
+                        </div>
+
+                        <div class="col-xs-12 col-sm-8 text-right">
+                            <nav>
+                                <ul class="pagination" style="margin-top: 0;">
+                                    <li v-for="b in makePagination(tenants.meta)" :class="{
+                                        'active': b.active,
+                                        'disabled': b.disabled
+                                      }">
+                                        <a href="#" @click.prevent="b.page ? filterTenants(b.page) : false;"
+                                            v-html="b.label" :disabled="b.disabled"></a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
             </div>
+
 
             <div class="overlay" v-if="tenants.loaded && tenants.loading">
                 <i class="fa fa-refresh fa-spin"></i>

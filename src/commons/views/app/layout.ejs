@@ -36,6 +36,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
         integrity="sha512-c42qTSw/wPZ3/5LBzD+Bw5f7bSF2oxou6wEb+I/lqeaKV5FDIfMvvRp772y4jcJLKuGUOpbJMdg/BTl50fJYAw=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        .content-wrapper {
+            padding-bottom: 60px;
+        }
+    </style>
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -454,6 +459,7 @@
                             this.init()
                         }
                     },
+
                     notify: (msg, type) => {
                         const config = {
                             allow_dismiss: false,
@@ -462,7 +468,147 @@
                         if (type) config.type = type
 
                         $.notify(msg, config);
-                    }
+                    },
+
+                    makePagination: (meta) => {
+                        const buttons = []
+
+                        buttons.push({
+                            label: '<span aria-hidden="true">&laquo;</span>',
+                            disabled: meta.currentPage === 1,
+                            active: false,
+                            page: meta.currentPage > 1 ? meta.currentPage - 1 : 1,
+                        })
+
+                        if (meta.pages <= 10) {
+                            for (let i = 1; i <= meta.pages; i++) {
+                                buttons.push({
+                                    label: i,
+                                    disabled: false,
+                                    active: meta.currentPage === i,
+                                    page: i,
+                                })
+                            }
+                        } else {
+                            /*
+
+                            1 : 1 2 3 4 5 ... 10 11
+                            2 : 1 2 3 4 5 ... 10 11
+                            3 : 1 2 3 4 5 ... 10 11
+                            4 : 1 2 3 4 5 ... 10 11
+                            5 : 1 2 ... 4 5 6 ... 10 11
+                            6 : 1 2 ... 5 6 7 ... 10 11
+                            7 : 1 2 ... 6 7 8 ... 10 11
+                            8 : 1 2 ... 7 8 9 10 11
+                            9 : 1 2 ... 7 8 9 10 11
+                            10 : 1 2 ... 7 8 9 10 11
+                            11 : 1 2 ... 7 8 9 10 11
+
+                            */
+
+                            if (meta.currentPage <= 4) {
+                                for (let i = 1; i <= 5; i++) {
+                                    buttons.push({
+                                        label: i,
+                                        disabled: false,
+                                        active: meta.currentPage === i,
+                                        page: i,
+                                    })
+                                }
+
+                                buttons.push({
+                                    label: '...',
+                                    disabled: true,
+                                    active: false
+                                })
+
+                                for (let i = meta.pages - 1; i <= meta.pages; i++) {
+                                    buttons.push({
+                                        label: i,
+                                        disabled: false,
+                                        active: false,
+                                        page: i,
+                                    })
+                                }
+                            }
+                            else if (meta.currentPage >= meta.pages - 3) {
+                                for (let i = 1; i <= 2; i++) {
+                                    buttons.push({
+                                        label: i,
+                                        disabled: false,
+                                        active: false,
+                                        page: i,
+                                    })
+                                }
+
+                                buttons.push({
+                                    label: '...',
+                                    disabled: true,
+                                    active: false
+                                })
+
+                                for (let i = meta.pages - 4; i <= meta.pages; i++) {
+                                    buttons.push({
+                                        label: i,
+                                        disabled: false,
+                                        active: meta.currentPage === i,
+                                        page: i,
+                                    })
+                                }
+                            }
+                            else {
+                                for (let i = 1; i <= 2; i++) {
+                                    buttons.push({
+                                        label: i,
+                                        disabled: false,
+                                        active: false,
+                                        page: i,
+                                    })
+                                }
+
+                                buttons.push({
+                                    label: '...',
+                                    disabled: true,
+                                    active: false
+                                })
+
+                                for (let i = meta.currentPage - 1; i <= meta.currentPage + 1; i++) {
+                                    buttons.push({
+                                        label: i,
+                                        disabled: false,
+                                        active: meta.currentPage === i,
+                                        page: i,
+                                    })
+                                }
+
+                                buttons.push({
+                                    label: '...',
+                                    disabled: true,
+                                    active: false
+                                })
+
+                                for (let i = meta.pages - 1; i <= meta.pages; i++) {
+                                    buttons.push({
+                                        label: i,
+                                        disabled: false,
+                                        active: false,
+                                        page: i,
+                                    })
+                                }
+                            }
+
+
+                        }
+
+                        buttons.push({
+                            label: '<span aria-hidden="true">&raquo;</span>',
+                            disabled: meta.currentPage === meta.pages,
+                            active: false,
+                            page: meta.currentPage < meta.pages ? meta.currentPage + 1 : meta.pages,
+                        })
+
+                        return buttons
+                    },
                 }
             })
 

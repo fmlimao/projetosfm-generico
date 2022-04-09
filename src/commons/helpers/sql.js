@@ -24,6 +24,11 @@ class Sql {
     return this.connection.raw(query, args)
       .then(data => data[0].affectedRows)
   }
+
+  uuid () {
+    return this.getOne('SELECT uuid() AS id;')
+      .then(data => data.id || false)
+  }
 }
 
 module.exports = Sql

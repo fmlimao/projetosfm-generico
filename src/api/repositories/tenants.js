@@ -3,23 +3,22 @@ const filters = require('../filters/tenants')
 const generateOptions = require('../../commons/helpers/generate-options')
 const makeObj = require('../../commons/helpers/make-obj')
 const JsonReturn = require('fm-json-response')
-const keysGenerator = require('../../commons/helpers/key-generator')
 const validator = require('fm-validator')
 
 const orderColumns = {
-  'tenant:id': 't.uuid',
-  'tenant:name': 't.name',
-  'tenant:active': 't.active',
-  'tenant:createdAt': 't.created_at',
-  'tenant:alteredAt': 't.altered_at'
+  tenantId: 't.tenant_id',
+  tenantName: 't.name',
+  tenantActive: 't.active',
+  tenantCreatedAt: 't.created_at',
+  tenantAlteredAt: 't.altered_at'
 }
 
 const viewColumns = {
-  tenantId: 'tenant:id',
-  tenantName: 'tenant:name',
-  tenantActive: 'tenant:active',
-  tenantCreatedAt: 'tenant:createdAt',
-  tenantAlteredAt: 'tenant:alteredAt'
+  tenantId: 'tenantId',
+  tenantName: 'tenantName',
+  tenantActive: 'tenantActive',
+  tenantCreatedAt: 'tenantCreatedAt',
+  tenantAlteredAt: 'tenantAlteredAt'
 }
 
 module.exports = class TenantsRepository {
@@ -38,7 +37,7 @@ module.exports = class TenantsRepository {
       filters.filterTenantCreatedAt(filter, whereCriteria, whereValues)
       filters.filterSearch(queryOptions.search, whereCriteria, whereValues)
 
-      queryOptions.orderByColumn = filters.orderByColumn(queryOptions.orderByColumn, orderColumns, 't.uuid')
+      queryOptions.orderByColumn = filters.orderByColumn(queryOptions.orderByColumn, orderColumns, 't.name')
 
       const next = {
         queryOptions,
@@ -84,7 +83,7 @@ module.exports = class TenantsRepository {
 
         const query = `
           SELECT
-            t.uuid AS tenantId,
+            t.tenant_id AS tenantId,
             t.name AS tenantName,
             t.active AS tenantActive,
             t.created_at AS tenantCreatedAt,
@@ -96,7 +95,6 @@ module.exports = class TenantsRepository {
           ${next.queryOptions.limit ? next.queryOptions.limit : ''};
           ;
         `
-
         next.data = await db.getAll(query, values)
 
         return next
@@ -105,12 +103,12 @@ module.exports = class TenantsRepository {
         // Essa promise formata os dados ou renomeia as colunas
 
         next.data = next.data.map(item => {
-          let newItem = {}
+          const newItem = {}
 
           for (const i in item) {
             if (typeof viewColumns[i] !== 'undefined') {
-              // newItem[viewColumns[i]] = item[i]
-              newItem = makeObj(newItem, viewColumns[i], item[i])
+              newItem[viewColumns[i]] = item[i]
+              // newItem = makeObj(newItem, viewColumns[i], item[i])
             }
           }
 
@@ -126,6 +124,11 @@ module.exports = class TenantsRepository {
         const pages = Math.ceil(next.filteredCount / length)
         const currentPage = start / length + 1
 
+        const columns = {}
+        for (const i in orderColumns) {
+          columns[orderColumns[i]] = i
+        }
+
         const ret = new JsonReturn()
 
         const meta = {
@@ -134,7 +137,11 @@ module.exports = class TenantsRepository {
           start,
           length,
           pages,
-          currentPage
+          currentPage,
+          orderBy: {
+            column: columns[next.queryOptions.orderByColumn],
+            dir: next.queryOptions.orderByDir
+          }
         }
 
         ret.addContent('meta', meta)
@@ -144,30 +151,23 @@ module.exports = class TenantsRepository {
       })
   }
 
-  static async findOneById (id = null, uuid = null) {
+  static async findOneById (tenantId) {
     return new Promise((resolve, reject) => {
       // Essa promise recupera o registro
 
       (async () => {
-        const field = id ? 't.tenant_id' : (uuid ? 'uuid' : null)
-        const value = id || uuid
-
-        if (!field) {
-          return reject(new Error('Busca inválida.'))
-        }
-
         const data = await db.getOne(`
           SELECT
-            t.uuid AS tenantId,
+            t.tenant_id AS tenantId,
             t.name AS tenantName,
             t.active AS tenantActive,
             t.created_at AS tenantCreatedAt,
             t.altered_at AS tenantAlteredAt
           FROM tenants t
           WHERE t.deleted_at IS NULL
-          AND ${field} = ?;
+          AND t.tenant_id = ?;
         `, [
-          value
+          tenantId
         ])
 
         resolve(data)
@@ -256,22 +256,22 @@ module.exports = class TenantsRepository {
         return next
       })
       .then(async next => {
-        next.fields.uuid = keysGenerator.generateRandomObjectID()
+        next.fields.tenant_id = await db.uuid()
 
-        const id = await db.insert(`
-          INSERT INTO tenants (uuid, name, created_at)
+        await db.insert(`
+          INSERT INTO tenants (tenant_id, name, created_at)
           VALUES (?, ?, NOW());
         `, [
-          next.fields.uuid,
+          next.fields.tenant_id,
           next.fields.name
         ])
 
-        return this.findOneById(id)
+        return this.findOneById(next.fields.tenant_id)
       })
   }
 
-  static async update (id = null, uuid = null, fields) {
-    return this.findOneById(id, uuid)
+  static async update (tenantId, fields) {
+    return this.findOneById(tenantId)
       .then(async findRet => {
         const data = findRet.content.data.tenant
 
@@ -328,7 +328,7 @@ module.exports = class TenantsRepository {
               FROM tenants
               WHERE deleted_at IS NULL
               AND name = ?
-              AND uuid != ?;
+              AND tenant_id != ?;
             `, [
             next.fields.name,
             next.data.id
@@ -358,24 +358,24 @@ module.exports = class TenantsRepository {
           UPDATE tenants
           SET name = ?,
           active = ?
-          WHERE uuid = ?;
+          WHERE tenant_id = ?;
         `, [
           next.data.name,
           next.data.active,
           next.data.id
         ])
 
-        return this.findOneById(null, next.data.id)
+        return this.findOneById(next.data.id)
       })
   }
 
-  static delete (id = null, uuid = null) {
-    return this.findOneById(id, uuid)
+  static delete (tenantId) {
+    return this.findOneById(tenantId)
       .then(async findRet => {
         await db.update(`
           UPDATE tenants
           SET deleted_at = NOW()
-          WHERE uuid = ?;
+          WHERE tenant_id = ?;
         `, [
           findRet.content.data.tenant.id
         ])

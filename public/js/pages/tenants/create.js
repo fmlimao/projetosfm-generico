@@ -16,6 +16,12 @@ mixins.push({
     }
   },
   methods: {
+    init: () => {
+      App.tenant.fields.name.value = 'Teste 13'
+
+      App.addTenant()
+    },
+
     addTenant: async () => {
       App.tenant.loading = true
       App.tenant.error = false
@@ -28,11 +34,13 @@ mixins.push({
       try {
         const response = (await axios.post('/api/tenants', {
           name: App.tenant.fields.name.value
-        })).data.content.data
+        })).data.content.data.tenant
 
-        App.tenant.messages = [
-          'Inquilino adicionado com sucesso!'
-        ]
+        // App.tenant.messages = [
+        //   'Inquilino adicionado com sucesso!'
+        // ]
+
+        App.notify('Inquilino adicionado com sucesso!', 'success');
 
         setTimeout(() => {
           window.location.replace(`/app/tenants/${response.id}`)
@@ -40,12 +48,21 @@ mixins.push({
       } catch (error) {
         const response = error.response.data
 
-        App.tenant.error = true
-        App.tenant.messages = response.messages
+        if (typeof response === 'object' && response.messages !== undefined) {
+          App.tenant.error = true
+          // App.tenant.messages = response.messages
 
-        for (const field in response.form) {
-          App.tenant.fields[field].error = true
-          App.tenant.fields[field].messages = response.form[field].messages
+          App.notify(response.messages.join('<br>'), 'danger');
+
+          for (const field in response.form) {
+            App.tenant.fields[field].error = true
+            App.tenant.fields[field].messages = response.form[field].messages
+          }
+        } else {
+          App.tenant.error = true
+          // App.tenant.messages.push('Ocorreu um erro interno. Por favor, tente novamente.')
+
+          App.notify('Ocorreu um erro interno. Por favor, tente novamente.', 'warning')
         }
       }
 

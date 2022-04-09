@@ -7,8 +7,8 @@ const JsonReturn = require('fm-json-response')
 // const validator = require('fm-validator')
 
 const orderColumns = {
-  'user:id': 'u.uuid',
-  'person:id': 'p.uuid',
+  'user:id': 'u.user_id',
+  'person:id': 'p.person_id',
   'person:name': 'p.name',
   'user:email': 'u.email',
   'user:active': 'u.active',
@@ -26,9 +26,10 @@ const viewColumns = {
   userAlteredAt: 'user:alteredAt'
 }
 
-module.exports = class TenantUserssRepository {
-  static async findAll (tenantId = null, tenantUuid = null, { filter = {} } = {}) {
+module.exports = class TenantUsersRepository {
+  static async findAll (tenantId = null, { filter = {} } = {}) {
     return new Promise(resolve => {
+      /**/console.log('tenantId', tenantId)
       // Essa promise serve para recuperar os filtros da busca
 
       const queryOptions = generateOptions(filter)
@@ -44,14 +45,13 @@ module.exports = class TenantUserssRepository {
       filters.filterPersonName(filter, whereCriteria, whereValues)
       filters.filterSearch(queryOptions.search, whereCriteria, whereValues)
 
-      queryOptions.orderByColumn = filters.orderByColumn(queryOptions.orderByColumn, orderColumns, 'u.uuid')
+      queryOptions.orderByColumn = filters.orderByColumn(queryOptions.orderByColumn, orderColumns, 'p.name')
 
       const next = {
         queryOptions,
         whereCriteria,
         whereValues,
-        tenantId,
-        tenantUuid
+        tenantId
       }
 
       resolve(next)
@@ -60,18 +60,17 @@ module.exports = class TenantUserssRepository {
         // Essa promise recupera o total de registros (sem filtro)
 
         const values = {
-          tenantId: next.tenantId,
-          tenantUuid: next.tenantUuid
+          tenantId: next.tenantId
         }
 
         const query = `
-          SELECT COUNT(u.uuid) AS total
+          SELECT COUNT(u.user_id) AS total
           FROM tenants t
           INNER JOIN tenants_users tu ON (t.tenant_id = tu.tenant_id AND tu.deleted_at IS NULL)
           INNER JOIN users u ON (tu.user_id = u.user_id AND u.deleted_at IS NULL)
           INNER JOIN people p ON (u.person_id = p.person_id AND p.deleted_at IS NULL)
           WHERE t.deleted_at IS NULL
-          AND (t.tenant_id = :tenantId OR t.uuid = :tenantUuid);
+          AND t.tenant_id = :tenantId;
         `
 
         next.totalCount = (await db.getOne(query, values)).total
@@ -82,18 +81,17 @@ module.exports = class TenantUserssRepository {
         // Essa promise recupera o total de registros (com filtro)
 
         const values = Object.assign({
-          tenantId: next.tenantId,
-          tenantUuid: next.tenantUuid
+          tenantId: next.tenantId
         }, next.whereValues)
 
         const query = `
-          SELECT COUNT(u.uuid) AS total
+          SELECT COUNT(u.user_id) AS total
           FROM tenants t
           INNER JOIN tenants_users tu ON (t.tenant_id = tu.tenant_id AND tu.deleted_at IS NULL)
           INNER JOIN users u ON (tu.user_id = u.user_id AND u.deleted_at IS NULL)
           INNER JOIN people p ON (u.person_id = p.person_id AND p.deleted_at IS NULL)
           WHERE t.deleted_at IS NULL
-          AND (t.tenant_id = :tenantId OR t.uuid = :tenantUuid)
+          AND t.tenant_id = :tenantId
           ${next.whereCriteria.length ? ` AND (${next.whereCriteria.join(' AND ')})` : ''}
         `
 
@@ -105,14 +103,13 @@ module.exports = class TenantUserssRepository {
         // Essa promise recupera os registros (com filtro)
 
         const values = Object.assign({
-          tenantId: next.tenantId,
-          tenantUuid: next.tenantUuid
+          tenantId: next.tenantId
         }, next.whereValues)
 
         const query = `
           SELECT
-            u.uuid AS userId,
-            p.uuid AS personId,
+            u.user_id AS userId,
+            p.person_id AS personId,
             p.name AS personName,
             u.email AS userEmail,
             u.active AS userActive,
@@ -123,12 +120,13 @@ module.exports = class TenantUserssRepository {
           INNER JOIN users u ON (tu.user_id = u.user_id AND u.deleted_at IS NULL)
           INNER JOIN people p ON (u.person_id = p.person_id AND p.deleted_at IS NULL)
           WHERE t.deleted_at IS NULL
-          AND (t.tenant_id = :tenantId OR t.uuid = :tenantUuid)
+          AND t.tenant_id = :tenantId
           ${next.whereCriteria.length ? ` AND (${next.whereCriteria.join(' AND ')})` : ''}
           ORDER BY ${next.queryOptions.orderByColumn} ${next.queryOptions.orderByDir}
           ${next.queryOptions.limit ? next.queryOptions.limit : ''};
-          ;
         `
+        /**/console.log('query', query)
+        /**/console.log('values', values)
 
         next.data = await db.getAll(query, values)
 

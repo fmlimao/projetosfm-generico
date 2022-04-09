@@ -8,7 +8,7 @@ function filterTenantId (filter, criterias, values) {
     })
 
     if (ids.length) {
-      criterias.push('t.uuid IN (:tenantId)')
+      criterias.push('t.tenant_id IN (:tenantId)')
       values.tenantId = ids
     }
   }
@@ -56,7 +56,7 @@ function filterTenantCreatedAt (filter, criterias, values) {
 function filterSearch (search, criterias, values) {
   if (search.length) {
     criterias.push(`(
-      t.uuid LIKE :search
+      t.tenant_id LIKE :search
       OR t.name LIKE :search
       OR t.active LIKE :search
       OR t.created_at LIKE :search
